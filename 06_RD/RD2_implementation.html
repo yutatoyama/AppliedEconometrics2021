@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Regression Discontinuity 2: Implementation in R</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Instructor: Yuta Toyama" />
+    <script src="RD2_implementation_files/header-attrs-2.7/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Regression Discontinuity 2: Implementation in R
+### Instructor: Yuta Toyama
+### Last updated: 2021-05-18
+
+---
+
+class: title-slide-section, center, middle
+name: logistics
+# Close election design
+
+---
+## Question and Estimation strategy
+
+- Lee, D.S., Moretti, E., and M. Butler, 2004, Do Voters Affect or Elect Policies? Evidence from
+the U.S. House, Quarterly Journal of Economics 119, 807-859.
+
+- Do voters affect policy itself or do they just select politician?
+
+- The roll-call voting record `\(RC_t\)` of the representative in the district following the election t can be written as `$$RC_t = (1-D_t)y_t + D_t x_t,$$`
+    - `\(D_t\)`: indicator variable for whether the Democrat won election t
+    - `\(x_t \; (y_t)\)`: the policy implemented by the Democrat (the Repulican) at t
+
+---
+
+- Under some conditions, it can be expressed as 
+`\begin{eqnarray}
+RC_t &amp;=&amp; constant + \pi_0 P_t^* + \pi_1 D_t +\epsilon_t \quad (1)
+ \\
+RC_{t+1} &amp;=&amp; constant +\pi_0 P_{t+1}^* + \pi_1 D_{t+1} +\epsilon_{t+1} \quad (2)
+\end{eqnarray}`
+    - `\(P_{t}^*\)`: voters' underlying popularity (the electoral strength) of the Democrat. It is defined as the probability that party D will win if parties D and R are expected to choose their blis points, not moderating points.
+
+---
+
+- **What we try to know** is whether `\(\pi_0 = 0\)` or `\(\pi_1 = 0\)`, or neither, meaning what affect representative's roll-call voting, in other words, politician's decision.
+    - If `\(\pi_1 = 0\)`, the roll-call voting of the representative in the district does not vary regarless of who wins (called **Complete Convergence**). That is both parties choose the exactly same policy. The policy position is determined only by the voter's underlying popularity.
+    
+    - If `\(\pi_0 = 0\)`, the roll-call voting of the representative in the district does not affected by voters' underlying popularity (called **Complete Divergence**). This can be interpretted that voters can not affect policy, but merely elect politicians’ fixed policies.
+    - If else, both parties select different policies, but voters can affect policy (called **Partial Convergence**).
+
+---
+
+- The problem is we cannot estimate equations (1) and (2), because we cannot observe `\(P_t^*\)`.
+
+- This brings **two issues** to figure out in order to identify `\(\pi_0\)` and `\(\pi_1\)`.
+    1. Simple comparison of `\(RC_t\)` between `\(D_t=1\)` and `\(D_t=0\)` without controlling on `\(P_t^*\)` leads endogeneity bias, since `\(P_t^*\)` tends to be higher among `\(D_t=1\)`. &lt;/br&gt; `\(\Rightarrow\)` We need to somehow control `\(P_t^*\)` `\(\Rightarrow\)` **RDD**
+        - By focusing on close elections (when voteshares of both parties are very tight), we can compare the cases between when `\(D_t=1\)` and `\(D_t=0\)`, fixing `\(P_t^*\)` constant. `\(\Rightarrow\)` Being able to identify `\(\pi_1\)`.
+        
+    2. Because `\(P_t^*\)` is directly unobservable, we have to somehow find variation of `\(P_t^*\)` to identify `\(\pi_0\)`. &lt;/br&gt; `\(\Rightarrow\)` **Incumbency advantage**
+        - The random assignment of who wins in the first election generates random assignment in which candidate has greater electoral strength for the next election.&lt;/br&gt; `\(\Rightarrow\)` This requires **two period analysis.**
+
+---
+### Identification
+
+- The conditional expectation of equation (2) is:
+`\begin{eqnarray}
+\lim_{v \downarrow 0.5} E[RC_{t+1}|V_t = v] &amp;= constant +\pi_0 E[P_{t+1}^*|D_t = 1, V_t =0.5] \\ 　&amp;+ \pi_1 E[D_{t+1}|D_t = 1 , V_t =0.5] \\
+&amp;= constant +\pi_0 P_{t+1}^{*D} + \pi_1 P^D_{t+1} 
+\end{eqnarray}`
+`\begin{eqnarray}
+\lim_{v \uparrow 0.5} E[RC_{t+1}|V_t = v] &amp;= constant +\pi_0 E[P_{t+1}^*|D_t = 0, V_t =0.5] \\ 　&amp;+ \pi_1 E[D_{t+1}|D_t = 0 , V_t =0.5] \\
+&amp;= constant +\pi_0 P_{t+1}^{*R} + \pi_1 P^R_{t+1} 
+\end{eqnarray}`
+    - `\(V_t\)` is voteshare of the Democrat in election t, and threshold is 0.5.
+    - `\(P_{t+1}^{*D} \equiv E[P_{t+1}^*|D_t = 1, V_t =0.5],\)` `\(P_{t+1}^{*R} \equiv E[P_{t+1}^*|D_t = 0, V_t = 0.5]\)`
+    - `\(P^D_{t+1}\)` ( `\(P^R_{t+1}\)`) is equilibrium probability that Democrat wins in election t+1 when Democrat (Republican) won in election t.
+    
+---
+## Estimation
+
+- When one could randomize `\(D_t\)` by restricting data close to the threshold, 
+
+`\begin{eqnarray}
+\underbrace{E[RC_{t+1}|D_t = 1] -  E[RC_{t+1}|D_t = 0]}_{\text{Observable}} &amp;=&amp; \pi_0( P_{t+1}^{*D} - P_{t+1}^{*R}) + \pi_1 (P^D_{t+1} - P^R_{t+1})  \\
+&amp;\equiv&amp; \underbrace{\gamma}_{\text{Total effect of initial win on future roll call votes}} \quad (3) \\
+\underbrace{ E[RC_{t}|D_t = 1] - E[RC_{t}|D_t = 0]}_{\text{Observable}} &amp;=&amp; \pi_1 \quad (4)\\
+\underbrace{ E[D_{t+1}|D_t = 1] -  E[D_{t+1}|D_t = 0]}_{\text{Observable}} &amp;=&amp; P^D_{t+1} - P^R_{t+1} \quad (5)\\
+\end{eqnarray}`
+
+- Therefore, `\(\pi_0( P_{t+1}^{*D} - P_{t+1}^{*R})\)` can be estimated by `\(\gamma - \pi_1 (P_{t+1}^D - P_{t+1}^R)\)`
+
+---
+## Data
+
+- There are two main data sets in this project.
+- The first is a measure of how liberal an official voted, broght from **ADA score** for 1946–1995. ADA varies from 0 to 100 for each representative. Higher scores correspond to a more “liberal” voting record.
+
+- The running variable in this study is the vote share. That is the share of all votes that went to a Democrat across Congressional districts.
+    - U. S. House elections are held every two years.
+
+---
+
+- **Panel data** (1946–1995 `\(\times\)` all districs around the U.S.)
+- Main variables
+    - `score`: ADA score in Congressional session t of the representative elected at k  `\((RC_{t})\)`
+    - `democrat`: indicator whether the Democrat wins in election t  `\((D_{t})\)`
+    - `lagdemocrat`: indicator whether the Democrat wins in election t-1 `\((D_{t-1})\)`
+    - `demvoteshare`: voteshare at district k in election t  `\((V_t)\)` 
+    - `lagdemvoteshare`: voteshare at district k in the previous election, t-1 `\((V_{t-1})\)`
+    
+    
+- For example, one specific row of the dataset has the voteshares and the results of the November 1992 election (period t) and the November 1990 election  (period t-1) at district k, and the ADA score of 1993–1994 Congressional session (period t).
+
+---
+
+class: title-slide-section, center, middle
+name: logistics
+# Graphical Analysis
+
+
+---
+## Graphical Analysis
+
+- Results of the analysis will be seen later. Here, we learn how to implement graphical analysis first.
+
+- **RD analyses hinge on their graphical analyses.**
+
+- always start with visual inspection to check which model (e.g. linear or nonlinear) is plausible.
+
+---
+### Outcomes by the running variables
+
+- First, we try to create this figure from the article.
+.middle[
+.center[
+&lt;img src="figure_RD2/fig2b.png" width="500"&gt;
+]
+]
+- The dependent variable is probability of Democrat victory in election t+1 and the independent is voteshare in election t.
+- Then, we will see what happens when we change bandwidth and functional form.
+
+---
+
+
+```r
+library(tidyverse)
+library(haven)
+library(estimatr)
+library(texreg)
+library(latex2exp)
+
+# Download data
+read_data &lt;- function(df)
+{
+  full_path &lt;- paste("https://raw.github.com/scunning1975/mixtape/master/", 
+                     df, sep = "")
+  df &lt;- read_dta(full_path)
+  return(df)
+}
+
+lmb_data &lt;- read_data("lmb-data.dta")
+```
+---
+
+- First, you have more than 10,000 data points, so reduce them for scatter plot.
+
+```r
+#aggregating the data
+# calculate mean value for every 0.01 voteshare
+demmeans &lt;- split(lmb_data$democrat, cut(lmb_data$lagdemvoteshare, 100)) %&gt;% 
+  lapply(mean) %&gt;% 
+  unlist()
+
+#createing new data frame for plotting
+agg_lmb_data &lt;- data.frame(democrat = demmeans, lagdemvoteshare = seq(0.01,1, by = 0.01))
+```
+
+
+---
+
+## Quadratic fitting in all data
+
+```r
+#grouping above or below threshold
+lmb_data &lt;- lmb_data %&gt;% 
+  mutate(gg_group = if_else(lagdemvoteshare &gt; 0.5, 1,0))
+
+
+#plotting
+gg_srd = ggplot(data=lmb_data, aes(lagdemvoteshare, democrat)) +
+    geom_point(aes(x = lagdemvoteshare, y = democrat), data = agg_lmb_data)  +
+    xlim(0,1) + ylim(-0.1,1.1) +
+    geom_vline(xintercept = 0.5) +
+    xlab("Democrat Vote Share, time t") +
+    ylab("Probability of Democrat Win, time t+1") +
+    scale_y_continuous(breaks=seq(0,1,0.2)) +
+    ggtitle(TeX("Effect of Initial Win on Winning Next Election: $\\P^D_{t+1} - P^R_{t+1}$")) 
+
+gg_srd + stat_smooth(aes(lagdemvoteshare, democrat, group = gg_group), 
+                     method = "lm", formula = y ~ x + I(x^2))
+```
+
+---
+.middle[
+.center[
+&lt;img src="figure_RD2/q_all.png" width="800"&gt;
+]
+]
+
+---
+## Quadratic fitting; limited to +/- 0.05
+
+```r
+gg_srd + stat_smooth(data=lmb_data %&gt;% filter(lagdemvoteshare&gt;.45 &amp; lagdemvoteshare&lt;.55),
+                     aes(lagdemvoteshare,  democrat, group = gg_group), 
+                     method = "lm", formula = y ~ x + I(x^2))
+```
+
+.middle[
+.center[
+&lt;img src="figure_RD2/q_l.png" width="500"&gt;
+]
+]
+
+- Notice that confidence interval widens. But, lines fit plots better.
+
+---
+## Linear different slops
+
+```r
+gg_srd + stat_smooth(aes(lagdemvoteshare,  democrat, group = gg_group), method = "lm") 
+```
+
+.middle[
+.center[
+&lt;img src="figure_RD2/l_d.png" width="600"&gt;
+]
+]
+---
+## Linear common slop
+
+```r
+gg_srd + stat_smooth(data=lmb_data, aes(lagdemvoteshare,  democrat), 
+                     method = "lm", formula = y ~ x + I(x &gt; 0.5))
+```
+- Alternatively, this can avoid showing line across the threshold. 
+
+```r
+lm_tmp &lt;- lm(democrat ~ lagdemvoteshare + I(lagdemvoteshare&gt;0.5), data = lmb_data)
+lm_fun &lt;- function(x) predict(lm_tmp, data.frame(lagdemvoteshare = x)) #output is predicted democrat
+gg_srd +
+stat_function(
+  data = data.frame(x = c(0, 1),y = c(0, 1)),aes(x = x,y=y),
+  fun = lm_fun,xlim = c(0,0.499),
+  col="blue",size = 1.5) +
+stat_function(
+  data = data.frame(x = c(0, 1),y = c(0, 1)),aes(x = x,y=y),
+  fun = lm_fun,xlim = c(0.501,1),
+  col="blue", size = 1.5 )
+```
+
+---
+.pull-left[
+.middle[
+.center[
+&lt;img src="figure_RD2/l_c1.png" width="500"&gt;
+]
+]
+]
+
+.pull-right[
+.middle[
+.center[
+&lt;img src="figure_RD2/l_c2.png" width="500"&gt;
+]
+]
+]
+
+---
+## Loess fitting
+
+```r
+gg_srd + stat_smooth(aes(lagdemvoteshare, democrat, group = gg_group), method = "loess")
+```
+
+.middle[
+.center[
+&lt;img src="figure_RD2/loess.png" width="500"&gt;
+]
+]
+- Compared to the quadratic case, variance gets bigger but the prediction fits the points better.
+---
+## Kernel-weighted local polynomial regressions
+
+
+```r
+library(stats)
+
+smooth_dem0 &lt;- lmb_data %&gt;% 
+  filter(lagdemvoteshare &lt; 0.5) %&gt;% 
+  dplyr::select(democrat, lagdemvoteshare) %&gt;% 
+  na.omit()
+
+smooth_dem0 &lt;- as_tibble(ksmooth(smooth_dem0$lagdemvoteshare, smooth_dem0$democrat, 
+                                 kernel = "box", bandwidth = 0.1))
+
+
+smooth_dem1 &lt;- lmb_data %&gt;% 
+  filter(lagdemvoteshare &gt;= 0.5) %&gt;% 
+  dplyr::select(democrat, lagdemvoteshare) %&gt;% 
+  na.omit()
+smooth_dem1 &lt;- as_tibble(ksmooth(smooth_dem1$lagdemvoteshare, smooth_dem1$democrat, 
+                                 kernel = "box", bandwidth = 0.1))
+
+gg_srd  + 
+  geom_smooth(aes(x, y), data = smooth_dem0) +
+  geom_smooth(aes(x, y), data = smooth_dem1)
+```
+
+---
+.middle[
+.center[
+&lt;img src="figure_RD2/kernel.png" width="600"&gt;
+]
+]
+
+---
+## Model and Bandwidth selection - bias-variance tradeoff
+
+- How should we pick the “right” model and bandwidth?
+- There’s always a **trade-off between bias and variance** when choosing bandwidth and polynomial length.
+    - Bias: distance between your prediction and true value
+    - Variance: width of your prediction
+    - The shorter the window and the more flexible (e.g. higher-order polynomials) the model, the lower the bias, but because you have less data, the variance in your estimate increases. 
+
+- Always, it's important to show robustness.
+
+---
+
+- Model selection
+    - Higher-order polynomials can lead to overfitting (Gelman and Imbens 2019). They recommend using local linear regressions with linear and quadratic forms only. 
+    - Local linear regression with a kernel smoother is a popular choice
+- Bandwidth selection:
+    - Optimal bandwidth selection: Imbens and Kalyanaraman (2011), Calonico, Cattaneo, and Titiunik (2014) **implimentation will be at the last slide**
+    - Cross validation: Imbens and Lemieux (2008) 
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Quantitative analysis
+
+---
+## Quantitative analysis
+
+- Our next goal is to replicate the quantitaive results of Lee, Moretti, and Butler (2004) in the table below.
+
+
+|   |  `\(\gamma\)`  |    `\(\pi_1\)` | `\(P_{t+1}^D - P_{t+1}^R\)` |    `\(\pi_1(P_{t+1}^D - P_{t+1}^R)\)` |    `\(\pi_0(P_{t+1}^{*D} - P_{t+1}^{*R})\)` |
+|----------------------|---------------|--------------|-------------|--------------|-------------|
+|  Variable  |  `\(ADA_{t+1}\)`  |    `\(ADA_{t}\)` | `\(DEM_{t+1}\)` | | |
+| Estimated gap  | 21.2 (1.9)  | 47.6  (1.3)| 0.48  (0.02)| | |
+|   |  |  |  | 22.84 (2.2)| -1.64 (2.0) |
+
+- The analysis restrics only observations where the Democrat voteshare is between 48 percent and 52 percent, so that the number of observations is 915.
+- From the second column, complete convergence is rejected.
+- The last column of the statistical insignificance shows that voters primarily elect policies rather than affect policies.
+- **Complete divergence** is supported by this analysis. 
+
+
+---
+
+```r
+# Restrict data containg the Democrat vote share between 48 percent and 52 percent
+# `lagdemvoteshare` is the Dem. voteshare of the t-1 period
+lmb_subset &lt;- lmb_data %&gt;% 
+  filter(lagdemvoteshare&gt;.48 &amp; lagdemvoteshare&lt;.52)
+
+# E[ADA_{t+1}|D_t] = \gamma
+lm_1 &lt;- lm_robust(score ~ lagdemocrat, data = lmb_subset, se_type = "HC1")
+# E[ADA_{t}|D_t] = \pi_1
+lm_2 &lt;- lm_robust(score ~ democrat, data = lmb_subset, se_type = "HC1")
+# E[D_{t+1}|D_t] = P_{t+1}^D - P_{t+1}^R
+lm_3 &lt;- lm_robust(democrat ~ lagdemocrat, data = lmb_subset, se_type = "HC1")
+
+screenreg(l = list(lm_1, lm_2,lm_3),
+          digits = 2,
+          # caption = 'title',
+          custom.model.names = c("ADA_t+1", "ADA_t", "DEM_t+1"),
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = FALSE, include.nobs = T, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE, 
+          custom.coef.map = list("lagdemocrat"="lagdemocrat","democrat"="democrat"), 
+          # select coefficients to report
+          stars = numeric(0))
+```
+
+---
+
+```
+## 
+## ======================================
+##              ADA_t+1  ADA_t    DEM_t+1
+## --------------------------------------
+## lagdemocrat   21.28              0.48 
+##               (1.95)            (0.03)
+## democrat               47.71          
+##                        (1.36)         
+## --------------------------------------
+## Num. obs.    915      915      915    
+## ======================================
+```
+
+- The results are slightly different. But ignore that for now. 
+- From now on, we will see how the results depend on **bandwidth** and **fanctional form**.
+
+---
+## Same specification in all the data
+
+
+```r
+#using all data (note data used is lmb_data, not lmb_subset)
+
+lm_1 &lt;- lm_robust(score ~ lagdemocrat, data = lmb_data, se_type = "HC1")
+lm_2 &lt;- lm_robust(score ~ democrat, data = lmb_data, se_type = "HC1")
+lm_3 &lt;- lm_robust(democrat ~ lagdemocrat, data = lmb_data, se_type = "HC1")
+
+screenreg(l = list(lm_1, lm_2,lm_3),
+          digits = 2,
+          # caption = 'title',
+          custom.model.names = c("ADA_t+1", "ADA_t", "DEM_t+1"),
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = FALSE, include.nobs = T, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE, 
+          custom.coef.map = list("lagdemocrat"="lagdemocrat","democrat"="democrat"), 
+          # select coefficients to report
+          stars = numeric(0))
+```
+
+
+---
+
+```
+## 
+## ============================================
+##              ADA_t+1    ADA_t      DEM_t+1  
+## --------------------------------------------
+## lagdemocrat     31.51                  0.82 
+##                 (0.48)                (0.01)
+## democrat                   40.76            
+##                            (0.42)           
+## --------------------------------------------
+## Num. obs.    13588      13588      13588    
+## ============================================
+```
+
+
+- Here we see that simply running the regression yields different estimates when we include data far from the cutoff itself.
+
+
+---
+### Controls for the running variable &amp; Recentering of the running variable
+
+- We will simply subtract 0.5 from the running variable.
+
+
+```r
+# Recentering
+lmb_data &lt;- lmb_data %&gt;% 
+  mutate(demvoteshare_c = demvoteshare - 0.5)
+
+lm_1 &lt;- lm_robust(score ~ lagdemocrat + demvoteshare_c, data = lmb_data, se_type = "HC1")
+lm_2 &lt;- lm_robust(score ~ democrat + demvoteshare_c, data = lmb_data, se_type = "HC1")
+lm_3 &lt;- lm_robust(democrat ~ lagdemocrat + demvoteshare_c, data = lmb_data, se_type = "HC1")
+
+screenreg(l = list(lm_1, lm_2,lm_3),
+          digits = 2,
+          # caption = 'title',
+          custom.model.names = c("ADA_t+1", "ADA_t", "DEM_t+1"),
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = FALSE, include.nobs = T, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE, 
+          custom.coef.map = list("lagdemocrat"="lagdemocrat","democrat"="democrat"), 
+          # select coefficients to report
+          stars = numeric(0))
+```
+
+---
+
+```
+## 
+## ============================================
+##              ADA_t+1    ADA_t      DEM_t+1  
+## --------------------------------------------
+## lagdemocrat     33.45                  0.55 
+##                 (0.85)                (0.01)
+## democrat                   58.50            
+##                            (0.66)           
+## --------------------------------------------
+## Num. obs.    13577      13577      13577    
+## ============================================
+```
+
+
+---
+## Different slopes on either side of the discontinuity
+
+- How to impliment a regression line to be on either side, which means necessarily that we have two lines left and right of the discontinuity? `\(\Rightarrow\)` **Interaction**
+
+
+```r
+lm_1 &lt;- lm_robust(score ~ lagdemocrat*demvoteshare_c, 
+                  data = lmb_data, se_type = "HC1")
+lm_2 &lt;- lm_robust(score ~ democrat*demvoteshare_c, 
+                  data = lmb_data, se_type = "HC1")
+lm_3 &lt;- lm_robust(democrat ~ lagdemocrat*demvoteshare_c, 
+                  data = lmb_data, se_type = "HC1")
+
+screenreg(l = list(lm_1, lm_2,lm_3),
+          digits = 2,
+          # caption = 'title',
+          custom.model.names = c("ADA_t+1", "ADA_t", "DEM_t+1"),
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = FALSE, include.nobs = T, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE, 
+          custom.coef.map = list("lagdemocrat"="lagdemocrat","democrat"="democrat"), 
+          # select coefficients to report
+          stars = numeric(0))
+```
+
+---
+
+
+```
+## 
+## ============================================
+##              ADA_t+1    ADA_t      DEM_t+1  
+## --------------------------------------------
+## lagdemocrat     30.51                  0.53 
+##                 (0.82)                (0.01)
+## democrat                   55.43            
+##                            (0.64)           
+## --------------------------------------------
+## Num. obs.    13577      13577      13577    
+## ============================================
+```
+
+---
+## Different quadratic regressions in all data
+
+
+
+```r
+lmb_data &lt;- lmb_data %&gt;% 
+  mutate(demvoteshare_sq = demvoteshare_c^2)
+
+lm_1 &lt;- lm_robust(score ~ lagdemocrat*demvoteshare_c + lagdemocrat*demvoteshare_sq, 
+                  data = lmb_data, se_type = "HC1")
+lm_2 &lt;- lm_robust(score ~ democrat*demvoteshare_c + democrat*demvoteshare_sq, 
+                  data = lmb_data, se_type = "HC1")
+lm_3 &lt;- lm_robust(democrat ~ lagdemocrat*demvoteshare_c + lagdemocrat*demvoteshare_sq, 
+                  data = lmb_data, se_type = "HC1")
+
+
+screenreg(l = list(lm_1, lm_2,lm_3),
+          digits = 2,
+          # caption = 'title',
+          custom.model.names = c("ADA_t+1", "ADA_t", "DEM_t+1"),
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = FALSE, include.nobs = T, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE, 
+          custom.coef.map = list("lagdemocrat"="lagdemocrat","democrat"="democrat"), 
+          # select coefficients to report
+          stars = numeric(0))
+```
+
+---
+
+
+```
+## 
+## ============================================
+##              ADA_t+1    ADA_t      DEM_t+1  
+## --------------------------------------------
+## lagdemocrat     13.03                  0.32 
+##                 (1.27)                (0.02)
+## democrat                   44.40            
+##                            (0.91)           
+## --------------------------------------------
+## Num. obs.    13577      13577      13577    
+## ============================================
+```
+
+
+- The larger standard error due to the longer polynomial term.
+
+---
+## Different quadratic regression; limited to +/- 0.05
+
+
+
+```r
+lmb_subset &lt;- lmb_data %&gt;% 
+  filter(demvoteshare &gt; .45 &amp; demvoteshare &lt; .55) %&gt;% 
+  mutate(demvoteshare_sq = demvoteshare_c^2)
+
+lm_1 &lt;- lm_robust(score ~ lagdemocrat*demvoteshare_c + lagdemocrat*demvoteshare_sq, 
+                  data = lmb_subset, se_type = "HC1")
+lm_2 &lt;- lm_robust(score ~ democrat*demvoteshare_c + democrat*demvoteshare_sq, 
+                  data = lmb_subset, se_type = "HC1")
+lm_3 &lt;- lm_robust(democrat ~ lagdemocrat*demvoteshare_c + lagdemocrat*demvoteshare_sq, 
+                  data = lmb_subset, se_type = "HC1")
+
+screenreg(l = list(lm_1, lm_2,lm_3),
+          digits = 2,
+          # caption = 'title',
+          custom.model.names = c("ADA_t+1", "ADA_t", "DEM_t+1"),
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = FALSE, include.nobs = T, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE, 
+          custom.coef.map = list("lagdemocrat"="lagdemocrat","democrat"="democrat"), 
+          # select coefficients to report
+          stars = numeric(0))
+```
+
+---
+
+```
+## 
+## =========================================
+##              ADA_t+1   ADA_t     DEM_t+1 
+## -----------------------------------------
+## lagdemocrat     7.35                0.17 
+##                (1.59)              (0.02)
+## democrat                 45.19           
+##                          (2.68)          
+## -----------------------------------------
+## Num. obs.    2387      2387      2387    
+## =========================================
+```
+
+---
+## Optimal bandwidth by `rdrobust`
+
+- The method of optimal bandwidth selection (Calonico, Cattaneo, and Titiunik 2014) can be implemented with the user-created `rdrobust` command.
+
+- These methods ultimately choose optimal bandwidths that may differ left and right of the cutoff based on some bias-variance trade-off. 
+
+
+```r
+# install.packages("rdrobust")
+library(rdrobust)
+
+rdr &lt;- rdrobust(y = lmb_data$score,
+                x = lmb_data$demvoteshare, c = 0.5)
+summary(rdr)
+```
+
+---
+
+```
+## [1] "Mass points detected in the running variable."
+```
+
+```
+## Call: rdrobust
+## 
+## Number of Obs.                13577
+## BW type                       mserd
+## Kernel                   Triangular
+## VCE method                       NN
+## 
+## Number of Obs.                5480        8097
+## Eff. Number of Obs.           2112        1893
+## Order est. (p)                   1           1
+## Order bias  (q)                  2           2
+## BW est. (h)                  0.086       0.086
+## BW bias (b)                  0.141       0.141
+## rho (h/b)                    0.609       0.609
+## Unique Obs.                   2770        3351
+## 
+## =============================================================================
+##         Method     Coef. Std. Err.         z     P&gt;|z|      [ 95% C.I. ]       
+## =============================================================================
+##   Conventional    46.491     1.241    37.477     0.000    [44.060 , 48.923]    
+##         Robust         -         -    31.425     0.000    [43.293 , 49.052]    
+## =============================================================================
+```
+
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Covariate test
+
+---
+## Covariates by the running variables
+
+- We use income (`realincome`) as covariates.
+- We limit window of voteshare from 0.25 to 0.75.
+
+
+```r
+#aggregating the data
+lmb_subset = lmb_data %&gt;% 
+    dplyr::select(realincome,demvoteshare) %&gt;% 
+    filter(demvoteshare&gt;.25 &amp; demvoteshare&lt;.75) %&gt;% 
+    na.omit()
+
+#calculate mean value for every 0.01 voteshare
+demmeans &lt;- split(lmb_subset$realincome, cut(lmb_subset$demvoteshare, 50)) %&gt;% 
+  lapply(mean) %&gt;% 
+  unlist()
+
+#createing new data frame for plotting
+agg_lmb_data &lt;- data.frame(income = demmeans, demvoteshare = seq(0.26, 0.75, by = 0.01))
+```
+---
+## Covariate test for income
+
+```r
+#grouping above or below threshold
+lmb_subset &lt;- lmb_subset %&gt;% 
+  mutate(gg_group = if_else(demvoteshare &gt; 0.5, 1,0))
+
+#plotting
+ggplot(data=lmb_subset, aes(demvoteshare, realincome)) +
+  geom_point(aes(x = demvoteshare, y = income), data = agg_lmb_data)  +
+  geom_vline(xintercept = 0.5) +
+  stat_smooth( aes(demvoteshare, realincome, group = gg_group), method = "lm", formula = y ~ x + I(x^2)) + ggtitle("voteshare and income")
+```
+
+---
+
+
+
+.middle[
+.center[
+&lt;img src="figure_RD2/c_test_income.png" width="600"&gt;
+]
+]
+
+---
+.middle[
+.center[
+&lt;img src="figure_RD2/c_test.png" width="600"&gt;
+]
+]
+
+
+- The authors also did covariate tests with other variables such as percentage with high-school degree (`pcthighschl`), percentage black (`pctblack`), percentage eligible to vote (`votingpop/totpop`).
+
+
+---
+
+.middle[
+.center[
+&lt;img src="figure_RD2/placebo.png" width="600"&gt;
+]
+]
+
+- t-1 period's outcome is also often used as a placebo.
+
+
+---
+### Coding of placebo
+
+```r
+#aggregating the data
+# calculate mean value for every 0.01 voteshare
+demmeans &lt;- split(lmb_data$lagdemvoteshare, cut(lmb_data$demvoteshare, 100)) %&gt;% 
+  lapply(mean) %&gt;% 
+  unlist()
+#createing new data frame for plotting
+agg_lmb_data &lt;- data.frame(lagdemvoteshare=demmeans, demvoteshare = seq(0.01,1, by = 0.01))
+#grouping above or below threshold
+lmb_data &lt;- lmb_data %&gt;% 
+  mutate(gg_group = if_else(demvoteshare &gt; 0.5, 1,0))
+
+
+#plotting
+ggplot(data=lmb_data, aes(demvoteshare, lagdemvoteshare)) +
+    geom_point(aes(x = demvoteshare, y = lagdemvoteshare), data = agg_lmb_data)  +
+    xlim(0,1) + ylim(-0.1,1.1) +
+    geom_vline(xintercept = 0.5) +
+    xlab("Democrat Vote Share, time t") +
+    ylab("Democrat Vote Share, time t-1") +
+    scale_y_continuous(breaks=seq(0,1,0.2)) +
+    ggtitle(TeX("Democratic Party Vote Share in Election t-1, by Democratic Party Vote Share in Election t$")) + stat_smooth(data=lmb_data,aes(x=demvoteshare, y=lagdemvoteshare, group = gg_group), 
+                     method = "lm", formula = y ~ x + I(x^2))
+```
+---
+.middle[
+.center[
+&lt;img src="figure_RD2/c_test_code.png" width="700"&gt;
+]
+]
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Density test
+
+---
+##  Density of the running variables
+
+-  McCrary density test
+- We will implement this test using local polynomial density estimation (Cattaneo, Jansson, and Ma 2019).
+
+```r
+# install.packages("rddensity")
+# install.packages("rdd")
+library(rddensity)
+library(rdd)
+
+DCdensity(lmb_data$demvoteshare, cutpoint = 0.5)
+
+density &lt;- rddensity(lmb_data$demvoteshare, c = 0.5)
+rdplotdensity(density, lmb_data$demvoteshare)
+```
+---
+.pull-left[
+.middle[
+.center[
+&lt;img src="figure_RD2/d_test1.png" width="500"&gt;
+]
+]
+]
+
+.pull-right[
+.middle[
+.center[
+&lt;img src="figure_RD2/d_test2.png" width="500"&gt;
+]
+]
+]
+- No signs that there was manipulation in the running variable at the cutoff.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

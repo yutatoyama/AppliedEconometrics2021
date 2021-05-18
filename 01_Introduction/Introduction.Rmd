@@ -1,0 +1,421 @@
+---
+title: "Lecture 1: Introduction"
+#subtitle: "Applied Econometrics: Causal Inference in Economics"
+author: 'Instructor: Yuta TOYAMA (遠山 祐太)'
+date: 'Last updated: `r Sys.Date()`'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      highlightStyle: github
+      highlightLines: yes
+      countIncrementalSlides: no
+      ratio: '16:9'
+knit: pagedown::chrome_print
+---
+
+class: title-slide-section, center, middle
+name: logistics
+
+# Welcome to the Course!!
+
+
+---
+
+## About me
+
+- Instructor: Yuta Toyama
+
+- Research Field: Industrial Organization, Applied Econometrics, Energy and Environmental Economics
+
+
+
+---
+
+## Data analysis is more important than ever
+
+.center[![Data Scientist](figs/DataScientist.png)]
+
+
+
+  
+---
+
+## Goal of the Course
+
+- We will learn **causal inference (因果推論) ** in economics.
+
+
+- Substance:
+  - How to establish **causality** in data analysis.
+  - How to critically examine causal statements in research and journalism.
+
+
+- Methods:
+    - Learn various econometric tools: Randomized control trial, regression, instrumental variable, difference-in-differences, regression discontinuity, and simple structural estimation
+    - Conduct empirical analysis using **R language**.
+
+---
+
+## Contents today
+
+1. What is causality?
+
+2. Case: Data analysis during the Covid-19 crisis
+
+3. Review of Probability: Conditional Expectation
+
+---
+class: title-slide-section, center, middle
+name: logistics
+
+
+# What is Causality?
+
+---
+
+## Causal Questions in Economics and Political Science
+
+- Causality (因果): X causes/affects/impacts Y
+
+
+- Many questions are causal!
+  - How much does an additional year of schooling increase your wage ?
+  - How does online advertisement affect sales of products?
+  - Do mergers between firms increase product prices?
+  - Does democracy cause economic growth?
+  - Does higher turnout benefit Democrats in presidential election?
+
+---
+
+## Theoretical Models Implies Causal Relationship
+
+- Consumers' Utility maximization:
+    - Higher income leads to more consumption (all else being fixed)
+    - Higher price (typically) implies less consumption (all else being fixed)
+
+
+- Educational investment leads to higher income due to 
+    - higher human capital (人的資本)
+    - signalling effect (シグナリング)
+
+    
+- Government spending stimulates GDP by multiplier effect (乗数効果)
+
+
+---
+
+## Data Analysis to Establish Causality
+
+- Data analysis aims to understand what is going on in reality.
+    - Test whether theoretical prediction is true.
+    - Determine the sign of ambiguous theoretical prediction.
+    
+
+- Data analysis starts with **description** of data.
+    - College grads earn 98% more per hour than others
+    - Income inequality higher now than 30 years ago
+    - Health care costs growing more slowly after ACA
+    - airline prices higher now than before merger wave 
+    
+
+---
+
+## Does **correlation** imply **causality**?
+
+- Suppose that X and Y are moving together (**correlated, 相関**).
+
+
+- Examples:
+  - 1: Cities with many police officers have more crimes (positive correlation).
+  - 2: Those who went to college earn more money by 10%.
+
+
+- Questions:
+  - Does this really mean “X causes Y”?
+  - Is the magnitude of the correlation equal to that of causal effect?
+
+---
+
+## Three possible channels 
+
+1. Causality
+2. Reverse causality
+3. Third factor, or **confounder (交絡因子)**
+    - often called **spurious correlation (見せかけの相関)**
+
+
+---
+## Three Channels in Figure
+
+
+---
+
+
+## Case: Is Avigan effective treatment for COVID-19?
+
+- Some Japanese celebrities who caught COVID-19 report their own experience that Anti-flu drug Avigan was effective for recovery.
+  - [An episode from Junichi Ishida](https://www.chunichi.co.jp/chuspo/article/entertainment/news/CK2020042302100136.html)
+
+
+- Does this mean Avigan is a silver bullet for COVID-19?
+
+
+- Why do we care? 
+  - Side effects of Avigan, resource allocation of public funds, etc.
+
+---
+
+
+.center[![Data Scientist](figs/news_avigan.png)]
+
+
+---
+
+## Difficulty 1: Counterfactual (反実仮想)
+
+- **Counterfactual outcome** is never observed 
+
+- Even without Avigan, a patient might have gotten better.
+
+---
+
+## Difficulty 2: Endogenous selection of treatment
+
+- Suppose we have data on patients who got and did not get Avigan in their treatment.
+
+- Does comparison of those people give you treatment effect of Avigan?
+
+- Issue: Those who get Avigan and who do not get might be quite different in other aspects. 
+
+---
+
+## Solution: Clinical Trial
+
+- Collect patients and **randomly** choose patients who are given the treatment.
+  - Treatment group and control group.
+
+
+- Compare the outcome of treatment and control group to see the effectiveness of treatment.
+
+
+- Since 2020, various institutes have been conducting a clinical trial on Avigan for COVID-19. The results have been not assuring, though. 
+
+---
+class: title-slide-section, center, middle
+name: COVID19
+
+# Case: Data Analysis during the COVID-19 Crisis
+
+---
+
+# Data Analysis during the COVID-19 Crisis
+
+- Perhaps, you might have started to see data analysis in the news more often than ever.
+    - `#` of positive cases each day
+    - flow of people (人流) based on mobile phone location (e.g., Agoop, NTT Docomo)
+    - Effective reproduction number (実効再生算数)
+    - Efficacy of COVID-19 vaccine from clinical trial
+
+    
+- Researchers in many fields have been conducting various analysis to tackle the crisis.
+
+
+- Some examples in Economics
+    - Macroeconomic analysis using SEIR (Susceptible-Exposed-Infectious-Recovered) model
+    - Nowcasting (ナウキャスティング) using alternative data (オルタナティブデータ)
+    - Evaluation of various policies towards the crisis. -> more on later
+
+---
+
+# Reference: 経済セミナー別冊「新型コロナ危機に経済学で挑む」
+
+
+
+
+---
+
+# Difficulties in Policy Analysis
+
+- 1: **Observational study (観察研究)**: 
+    - Data is observation of what people actually do.
+    - Unlike clinical trial, cannot randomize treatment of policy in general.
+
+
+- 2: Data limitation
+    - May not be able to observe what researchers need.
+
+
+- With these obstacles, we still need to **draw the conclusion while clearly acknowledging its limitations**.
+
+
+---
+
+# Case: Special Cash Payment
+
+- Special Cash Payment (特別定額給付金): 100,000 JPY for everyone.
+
+
+- Question: How much did people actually spend?
+    
+    
+- Why we care?
+    - Controversial policy (both supporters and )
+    - Many countries have done a similar policy.
+    
+
+- Three empirical studies on this issue:
+    - Kubota, Onishi, and Toyama (2021): Bank account data
+    - Kaneda, Kubota, and Tanaka (2021): Financial app data
+    - 宇南山・古村・服部 (2021): Official household survey (「家計調査」)
+
+
+- I will explain Kubota, Onishi, and Toyama (2021) in detail.
+
+---
+class: title-slide-section, center, middle
+name: logistics
+
+# Review of Conditional Expectation
+
+---
+# Conditional Expectation (条件付き期待値)
+
+- Overview
+    - We are interested in the relationship between two different variables, say $X$ and $Y$.
+    - Conditional expectation is a way to characterize such relationship
+    - Quick review of conditional expectation.
+
+-  Reference
+    - Angrist and Pischke MHE Chapter 2 and 3.
+    - 奥井ら
+
+---
+
+# Conditional Distribution (条件付き分布)
+
+- Let $Y$ and $X$ be the random variables (確率変数). 
+    - Let's say $Y$ is the outcome variable and $X$ is the explanatory variable. 
+
+
+- The probability distribution function (確率分布関数)
+    - Discrete (離散): $$P(y,x)=Prob(X=x,Y=y)$$ for $y\in\{y_{1},\cdots,y_{L}\}$ and $x\in\{x_{1},\cdots,x_{L}\}$
+    - Continuous (連続): the density function (密度関数) $f(y,x)$ for $x\in\mathbb{R}$ and $y\in\mathbb{R}$. 
+
+<!-- - Definition: **Support (台)** of the random variable $X$, denoted by $supp(X)$ is the range within which the random variable $X$ can take a value. -->
+<!--     - In the discrete case, $supp(X)=\{x_{1},\cdots,x_{L}\}$ -->
+
+---
+
+
+- The conditional probability mass function for discrete case $$P(y|x)=\frac{P(y,x)}{P(x)}$$ where $P(x)=\sum_{i=1}^{N}P(y_{i},x)$
+
+- The conditional density function for continuous case $f(y|x)=\frac{f(y,x)}{f(x)}$
+
+
+
+---
+# Conditional Expectation (条件付き期待値) 
+
+- The **conditional expectation** function $$E[Y|X]=\sum_{l=1}^{L}y_{l}P(Y=y_{l}|X)$$ for a discrete case and $$E[Y|X]=\int_{-\infty}^{\infty}yf(y|X)dy$$ for a continuous case. 
+
+
+
+---
+
+## Properties of Conditional Expectation Function
+
+- Proposition CE1 $$E[c(X)|X]=c(X)$$ for a function $c(\cdot)$. 
+
+- Proposition CE2 (linearity) $$E[a(X)Y+b(X)|X]=a(X)E[Y|X]+b(X)$$ for function $a(\cdot)$ and $b(\cdot)$. 
+
+- Proposition CE3. If $X$ and $Y$ are independent, then $E[Y|X]=E[Y]$
+
+---
+
+
+- Proof of CE3 (for a discrete case): 
+
+\begin{eqnarray}
+E[Y|X]&=&\sum_{l=1}^{L}y_{l}P(Y=y_{l}|X) \\
+	  &=&\sum_{l=1}^{L}y_{l}\frac{P(Y=y_{l},X)}{P(X)}=\sum_{l=1}^{L}y_{l}\frac{P(Y=y_{l})\times P(X)}{P(X)}=E[Y].
+\end{eqnarray}
+
+Note that we use $P(Y=y,X=x)=P(X=x)P(Y=y)$ by independence.
+
+
+
+---
+# Law of iterated expectation (繰り返し期待値の法則)
+
+- Proposition CE4 (**law of iterated expectation**)$$E[Y]=E[E[Y|X]]$$
+
+- Expectation of conditional expectation $E[Y|X]$ is unconditional expectation $E[Y]$
+
+
+
+
+---
+
+- Proof for a discrete case
+
+\begin{eqnarray}
+E[Y]&=&\sum_{l=1}^{L}y_{l}P(y_{l}) \\
+	&=&\sum_{l=1}^{L}y_{l}\left[\sum_{l'=1}^{L} P(y_{l},x_{l'})\right] \\
+	&=&\sum_{l=1}^{L}y_{l}\left[\sum_{l'=1}^{L}P(y_{l}|x_{l'})P(x_{l'})\right] \\
+	&=&\sum_{l'=1}^{L}P(x_{l'})\underbrace{\left[\sum_{l=1}^{L}P(y_{l}|x_{l'})y_{l}\right]}_{E[Y|X]}=E[E[Y|X]]
+\end{eqnarray}
+
+- Note: A similar proof for the continuous case, though it requires some technical conditions for the exchange of integrals (Fubini's theorem).
+
+
+
+---
+<br/><br/>
+- Proposition CE4' $$E[Y|X]=E\left[E[Y|X,Z]|X\right]$$
+    - Conditional on $X$, can apply the law of iterated expectation.
+    
+    
+- Proposition CE5: If $E[Y|X]=E[Y]$, then $Cov(X,Y)=0$.
+    - We often say $E[Y|X]=E[Y]$ is **mean independence**
+    - Remember: The opposite is not true.
+
+
+<!-- <br/><br/> -->
+<!-- - Proposition CE6: Suppose that $E[Y^{2}]<\infty$ and $E[g(X)]<\infty$ for some function $g$. Then $$E[(Y-\mu(X))^{2}]\leq E[(Y-g(X))^{2}]$$ where $\mu(X)=E[Y|X]$.  -->
+
+<!-- - Interpretation:  -->
+<!--     - Suppose that we explain $Y$ using some function $g$ and data $X$. -->
+<!--     - The function $g$ that minimizes **the mean squared error** is conditional expectation.  -->
+
+
+
+<!-- --- -->
+
+<!-- - Proof:  -->
+
+<!-- \begin{eqnarray} -->
+<!-- E[(Y-g(X))^{2}]	&=&E[\left\{ \left(Y-\mu(X)\right)+\left(\mu(X)-g(X)\right)\right\} ^{2}]\\ -->
+<!-- 	&=&E\left[\left(Y-\mu(X)\right)^{2}\right]+E\left[\left(\mu(X)-g(X)\right)^{2}\right]\\ -->
+<!-- 	&+& 2E\left[\left(Y-\mu(X)\right)\left(\mu(X)-g(X)\right)\right].  -->
+<!-- \end{eqnarray} -->
+
+<!-- Using the law of iterated expectation,  -->
+
+<!-- \begin{eqnarray} -->
+<!-- E\left[\left(Y-\mu(X)\right)\left(\mu(X)-g(X)\right)\right]	&=&E\left\{E\left[\left(Y-\mu(X)\right)\left(\mu(X)-g(X)\right)|X\right]\right\} \\ -->
+<!-- 	&=&E\left\{ \left(\mu(X)-g(X)\right)\left(E[Y|X]-\mu(X)\right)\right\} \\ -->
+<!-- 	&=&0 -->
+<!-- \end{eqnarray} -->
+
+<!-- Thus,  -->
+<!-- $$E[(Y-g(X))^{2}]=E\left[\left(Y-\mu(X)\right)^{2}\right]+E\left[\left(\mu(X)-g(X)\right)^{2}\right],$$ which can take its minimum when $g(X)=\mu(X)$.  -->
+
+
+
+---
+# Another useful properties 
+
+- Law of iterated probability $$P(Y)=\sum_{l=1}^{L}P(Y|x_{l})P(x_{l})$$ for a discrete random variable $X$
+- Law of total variance $$Var(Y)=E[V(Y|X)]+V[E(Y|X)]$$
+

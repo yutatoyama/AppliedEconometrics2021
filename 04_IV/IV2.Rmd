@@ -1,0 +1,499 @@
+---
+title: "Instrumental Variable Estimation 2: Implementation in R"
+author: "Instructor: Yuta Toyama"
+date: "Last updated: `r Sys.Date()`"
+fig_width: 6 
+fig_height: 4 
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      highlightStyle: github
+      highlightLines: yes
+      countIncrementalSlides: no
+      ratio: '16:9'
+knit: pagedown::chrome_print
+---
+class: title-slide-section, center, middle
+name: logistics
+
+# Introduction
+
+---
+## Introduction
+
+- I cover three examples of instrumental variable regressions.
+    1. Wage regression
+    2. Demand curve
+    3. Effects of Voter Turnout (Hansford and Gomez)
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Wage regression
+
+---
+## Example 1: Wage regression
+
+- Use dataset "Mroz", cross-sectional labor force participation data that accompany "Introductory Econometrics" by Wooldridge. 
+    - Original data from  *"The Sensitivity of an Empirical Model of Married Women's Hours of Work to Economic and Statistical Assumptions"* by Thomas Mroz published in *Econometrica* in 1987.
+    - Detailed description of data: https://www.rdocumentation.org/packages/npsf/versions/0.4.2/topics/mroz 
+
+
+```{r, message=FALSE}
+library("foreign")
+
+# You do not have to worry about a message "cannot read factor labels from Stata 5 files".
+data <- read.dta("data/MROZ.DTA")
+```
+
+---
+.pull-left-left[
+- Describe data
+```{r, message=FALSE, eval=FALSE}
+library(stargazer)
+stargazer(data,
+          type = "text")
+```
+]
+
+.pull-right-right[
+```{r,message=FALSE, echo=FALSE}
+library(stargazer)
+stargazer(data,type = "text")
+```
+]
+---
+<br/><br/>
+- Consider the wage regression 
+$$\log(w_i) = \beta_0 + \beta_1 educ_i + \beta_2 exper_i + \beta_3 exper_i^2 + \epsilon_i$$
+- We assume that $exper_i$ is exogenous but $educ_i$ is endogenous.
+- As an instrument for $educ_i$, we use the years of schooling for his or her father and mother, which we call $fathereduc_i$ and $mothereduc_i$. 
+- Discussion on these IVs will be later. 
+
+---
+
+```{r,eval=FALSE}
+library("AER")
+library("dplyr")
+library("texreg")
+library("estimatr")
+
+
+# data cleaning
+data %>% 
+  select(lwage, educ, exper, expersq, motheduc, fatheduc) %>%
+  filter( is.na(lwage) == 0 ) -> data
+
+
+result_OLS <- lm_robust( lwage ~ educ + exper + expersq, data = data, se_type = "HC1")
+
+# IV regression using fathereduc and mothereduc
+result_IV <- iv_robust(lwage ~ educ + exper + expersq | 
+                           fatheduc + motheduc + exper + expersq, 
+                       data = data, se_type = "HC1")
+
+# Show result
+screenreg(l = list(result_OLS, result_IV),digits = 3,
+          # caption = 'title',
+         # custom.model.names = c("(I)", "(II)", "(III)", "(IV)", "(V)"),
+          custom.coef.names = NULL,  # add a class, if you want to change the names of variables.
+          include.ci = F,include.rsquared = FALSE, include.adjrs = TRUE, include.nobs = TRUE, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE,
+          custom.header = list("lwage" = 1:2), # you can add header especially to indicate dependent variable 
+          stars = numeric(0))
+
+```
+---
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+library("AER")
+library("dplyr")
+library("texreg")
+library("estimatr")
+
+
+# data cleaning
+data %>% 
+  select(lwage, educ, exper, expersq, motheduc, fatheduc) %>%
+  filter( is.na(lwage) == 0 ) -> data
+
+
+result_OLS <- lm_robust( lwage ~ educ + exper + expersq, data = data, se_type = "HC1")
+
+# IV regression using fathereduc and mothereduc
+result_IV <- iv_robust(lwage ~ educ + exper + expersq | fatheduc + motheduc + exper + expersq, data = data, se_type = "HC1")
+
+
+# Show result
+screenreg(l = list(result_OLS, result_IV),
+          digits = 3,
+          # caption = 'title',
+         # custom.model.names = c("(I)", "(II)", "(III)", "(IV)", "(V)"),
+          custom.coef.names = NULL,  # add a class, if you want to change the names of variables.
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = TRUE, include.nobs = TRUE, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE,
+          custom.header = list("lwage" = 1:2), # you can add header especially to indicate dependent variable  
+          stars = numeric(0)
+          )
+
+```
+---
+
+- How about the first stage? You should always check this!!
+
+```{r}
+
+# First stage regression 
+
+result_1st <- lm(educ ~ motheduc + fatheduc + exper + expersq, data = data)
+
+# F test
+linearHypothesis(result_1st, 
+                 c("fatheduc = 0", "motheduc = 0" ), 
+                 vcov = vcovHC, type = "HC1")
+
+```
+
+---
+## Discussion on IV
+
+- Labor economists have used family background variables as IVs for education. 
+    - **Relevance**: OK from the first stage regression. 
+    - **Independence**: A bit suspicious. Parents' education would be correlated with child's ability through quality of nurturing at an early age. 
+- Still, we can see that these IVs can mitigate (though may not eliminate completely) the omitted variable bias. 
+- Discussion on the validity of instruments is crucial in empirical research. 
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Demand curve
+
+---
+## Example 2: Estimation of the Demand for Cigaretts
+
+- Demand model is a building block in many branches of Economics. 
+- For example, health economics is concerned with the study of how health-affecting behavior of individuals is influenced by the health-care system and regulation policy. 
+- Smoking is a prominent example as it is related to many illnesses and negative externalities.
+- It is plausible that cigarette consumption can be reduced by taxing cigarettes more heavily. 
+- Question: how much taxes must be increased to reach a certain reduction in cigarette consumption? -> Need to know **price elasticity of demand** for cigaretts.
+
+---
+<br/><br/>
+- Use `CigarrettesSW` in the package `AER`.
+- a panel data set that contains observations on cigarette consumption and several economic indicators for all 48 continental federal states of the U.S. from 1985 to 1995.
+- What is **panel data**? The data involves both time series and cross-sectional information.
+    - The variable is denoted as $y_{it}$, which indexed by individual $i$ and time $t$.
+    - Cross section data $y_i$: information for a particular individual $i$ (e.g., income for person $i$).
+    - Time series data $y_t$: information for a particular time period (e.g., GDP in year $y$)
+    - Panel data $y_{it}$: income of person $i$ in year $t$.
+- We will see more on panel data later in this course. For now, we use the panel data as just  cross-sectional data (**pooled cross-sections**)
+
+---
+
+
+```{r}
+# load the data set and get an overview
+data("CigarettesSW")
+summary(CigarettesSW)
+```
+
+---
+<br/>
+- Consider the following model $$\log (Q_{it}) = \beta_0 + \beta_1 \log (P_{it}) + \beta_2 \log(income_{it}) + u_{it}$$ where 
+    - $Q_{it}$ is the number of packs per capita in state $i$ in year $t$, 
+    - $P_{it}$ is the after-tax average real price per pack of cigarettes, and 
+    - $income_{it}$ is the real income per capita. This is demand shifter.
+- As an IV for the price, we use the followings:
+    - $SalesTax_{it}$: the proportion of taxes on cigarettes arising from the general sales tax.
+        - Relevant as it is included in the after-tax price
+        - Exogenous(indepndent) since the sales tax does not influence demand directly, but indirectly through the price.
+    - $CigTax_{it}$: the cigarett-specific taxes
+      
+---
+
+```{r}
+CigarettesSW %>% 
+  mutate( rincome = (income / population) / cpi) %>% 
+  mutate( rprice  = price / cpi ) %>% 
+  mutate( salestax = (taxs - tax) / cpi ) %>% 
+  mutate( cigtax = tax/cpi ) -> Cigdata
+
+```
+
+- Let's run the regressions
+
+```{r,eval=FALSE}
+ 
+cig_ols <- lm_robust(log(packs) ~ log(rprice) + log(rincome) ,  data = Cigdata,se_type = "HC1")
+#coeftest(cig_ols, vcov = vcovHC, type = "HC1")
+
+
+cig_ivreg <- iv_robust(log(packs) ~ log(rprice) + log(rincome)  | 
+                    log(rincome) +  salestax +  cigtax, data = Cigdata, se_type = "HC1")
+#coeftest(cig_ivreg, vcov = vcovHC, type = "HC1")
+
+# Show result
+screenreg(l = list(cig_ols, cig_ivreg),digits = 3,
+          # caption = 'title',
+          custom.model.names = c("OLS", "IV"),custom.coef.names = NULL,  # add a class, if you want to change the names of variables.
+          include.ci = F,include.rsquared = FALSE, include.adjrs = TRUE, include.nobs = TRUE, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE,
+          custom.header = list("log(packs)" = 1:2), # you can add header especially to indicate dependent variable 
+          stars = numeric(0)
+          )
+```
+
+---
+```{r,echo=FALSE}
+
+cig_ols <- lm_robust(log(packs) ~ log(rprice) + log(rincome) ,  data = Cigdata,se_type = "HC1")
+#coeftest(cig_ols, vcov = vcovHC, type = "HC1")
+
+
+cig_ivreg <- iv_robust(log(packs) ~ log(rprice) + log(rincome)  | 
+                    log(rincome) +  salestax +  cigtax, data = Cigdata, se_type = "HC1")
+#coeftest(cig_ivreg, vcov = vcovHC, type = "HC1")
+
+# Show result
+screenreg(l = list(cig_ols, cig_ivreg),
+          digits = 3,
+          # caption = 'title',
+          custom.model.names = c("OLS", "IV"),
+          custom.coef.names = NULL,  # add a class, if you want to change the names of variables.
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = TRUE, include.nobs = TRUE, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE,
+          custom.header = list("log(packs)" = 1:2), # you can add header especially to indicate dependent variable 
+          stars = numeric(0)
+          )
+```
+
+---
+<br/>
+- The first stage regression
+```{r,eval=FALSE}
+
+# First stage regression 
+
+result_1st <- lm(log(rprice) ~ log(rincome) + log(rincome) + salestax + cigtax , data= Cigdata)
+
+# F test
+linearHypothesis(result_1st, 
+                 c("salestax = 0", "cigtax = 0" ), 
+                 vcov = vcovHC, type = "HC1")
+
+```
+
+---
+<br/><br/>
+```{r, echo=FALSE}
+
+# First stage regression 
+
+result_1st <- lm(log(rprice) ~ log(rincome) + log(rincome) + salestax + cigtax , data= Cigdata)
+
+# F test
+linearHypothesis(result_1st, 
+                 c("salestax = 0", "cigtax = 0" ), 
+                 vcov = vcovHC, type = "HC1")
+
+```
+
+---
+class: title-slide-section, center, middle
+name: logistics
+
+# Voting
+
+---
+## Example 3: Effects of Turnout on Partisan Voting
+
+- THOMAS G. HANSFORD and BRAD T. GOMEZ "Estimating the Electoral Effects of Voter Turnout" The American Political Science Review Vol. 104, No. 2 (May 2010), pp. 268-288
+    - Link: https://www.cambridge.org/core/journals/american-political-science-review/article/estimating-the-electoral-effects-of-voter-turnout/8A880C28E79BE770A5CA1A9BB6CF933C
+- Here, we will see a simplified version of their analysis. 
+- The dataset is [here](HansfordGomez_Data.csv)
+
+---
+
+```{r, eval=FALSE}
+library(readr)
+
+HGdata <- read_csv("data/HansfordGomez_Data.csv")
+
+stargazer::stargazer(as.data.frame(HGdata) %>% select(-starts_with("Yr")),type="text")
+
+```
+---
+
+
+```{r, echo=FALSE,message=FALSE,warning=FALSE}
+library(readr)
+
+HGdata <- read_csv("data/HansfordGomez_Data.csv")
+
+stargazer::stargazer(as.data.frame(HGdata) %>% select(-starts_with("Yr"),-(dph_StateVAP:State_DVS_lag2)),type="text")
+
+```
+---
+```{r, echo=FALSE,message=FALSE,warning=FALSE}
+
+stargazer::stargazer(as.data.frame(HGdata) %>% select(dph_StateVAP:State_DVS_lag2),type="text")
+
+```
+---
+
+- Data description: 
+
+| Name | Description|
+|---|-------------------------------------------------------------------|
+| Year | Election Year|
+| FIPS_County | FIPS County Code|
+| Turnout | Turnout as Pcnt VAP|
+| Closing2 | Days between registration closing date and election|
+| Literacy | Literacy Test|
+| PollTax | Poll Tax|
+| Motor | Motor Voter|
+| GubElection | Gubernatorial Election in State|
+| SenElection | U.S. Senate Election in State|
+| GOP_Inc | Republican Incumbent|
+
+
+---
+
+
+| Name | Description|
+|---|-------------------------------------------------------------------|
+| Yr52 | 1952 Dummy|
+| Yr56 | 1956 Dummy|
+| Yr60 | 1960 Dummy|
+| Yr64 | 1964 Dummy|
+| Yr68 | 1968 Dummy|
+| Yr72 | 1972 Dummy|
+| Yr76 | 1976 Dummy|
+| Yr80 | 1980 Dummy|
+| Yr84 | 1984 Dummy|
+| Yr88 | 1988 Dummy|
+| Yr92 | 1992 Dummy|
+| Yr96 | 1996 Dummy|
+| Yr2000 | 2000 Dummy|
+
+---
+
+<br/><br/>
+
+| Name | Description|
+|---|-------------------------------------------------------------------|
+| DNormPrcp_KRIG | Election day rainfall - differenced from normal rain for the day|
+| GOPIT | Turnout x Republican Incumbent|
+| DemVoteShare2_3MA | Partisan composition measure = 3 election moving avg. of Dem Vote Share|
+| DemVoteShare2 | Democratic Pres Candidate's Vote Share|
+| RainGOPI | Rainfall measure x Republican Incumbent|
+| TO_DVS23MA | Turnout x Partisan Composition measure|
+| Rain_DVS23MA | Rainfall measure x Partisan composition measure|
+| dph | =1 if home state of Dem pres candidate|
+| dvph | =1 if home state of Dem vice pres candidate|
+
+---
+
+<br/><br/>
+
+| Name | Description|
+|---|-------------------------------------------------------------------|
+| rph | =1 if home state of Rep pres candidate|
+| rvph | =1 if home state of Rep vice pres candidate|
+| state_del | avg common space score for the House delegation|
+| dph_StateVAP | = dph*State voting age population|
+| dvph_StateVAP | = dvph*State voting age population|
+| rph_StateVAP | = rph*State voting age population|
+| rvph_StateVAP | = rvph*State voting age population|
+| State_DVS_lag | State-wide Dem vote share, lagged one election|
+| State_DVS_lag2 | State_DVS_lag squared|
+
+---
+- Consider the following regression $$DemoShare_{it} = \beta_0 + \beta_1 Turnout_{it} + u_t + u_{it}$$ where 
+    - $DemoShare_{it}$ : Two-party vote share for Democrat candidate in county $i$ in the presidential election in year $t$
+    - $Turnout_{it}$ : Turnout rate in county $i$ in the presidential election in year $t$
+    - $u_t$ : **Year fixed effects**. Time dummies for each presidential election year
+- As an IV, we use the rainfall measure denoted by `DNormPrcp_KRIG`
+
+---
+
+```{r, cache=TRUE,eval=FALSE}
+# You can do this, but it is tedious.
+hg_ols <- lm_robust( DemVoteShare2 ~ Turnout + Yr52 + Yr56 + Yr60 + Yr64 + Yr68 + Yr72 + Yr76 + Yr80 
+                     + Yr84 + Yr88 + Yr92 + Yr96 + Yr2000,  data = HGdata, se_type="HC1")
+#coeftest(hg_ols, vcov = vcovHC, type = "HC1")
+
+# By using "factor(Year)" as an explanatory variable, the regression automatically incorporates the dummies for each value.
+hg_ols <- lm_robust( DemVoteShare2 ~ Turnout + factor(Year) , data = HGdata, se_type="HC1")
+#coeftest(hg_ols, vcov = vcovHC, type = "HC1")
+
+# Iv regression
+hg_ivreg <- iv_robust( DemVoteShare2 ~ Turnout + factor(Year) | 
+                    factor(Year) + DNormPrcp_KRIG, data = HGdata, se_type="HC1")
+#coeftest(hg_ivreg, vcov = vcovHC, type = "HC1")
+
+# Show result
+screenreg(l = list(hg_ols, hg_ivreg),
+          digits = 3,
+          # caption = 'title',
+          custom.model.names = c("OLS", "IV"),
+          custom.coef.names = NULL,  # add a class, if you want to change the names of variables.
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = TRUE, include.nobs = TRUE, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE,
+          custom.header = list("DemVoteShare2" = 1:2), # you can add header especially to indicate dependent variable 
+          stars = numeric(0)
+          )
+```
+
+---
+```{r, cache=TRUE,echo=FALSE}
+
+# By using "factor(Year)" as an explanatory variable, the regression automatically incorporates the dummies for each value.
+hg_ols <- lm_robust( DemVoteShare2 ~ Turnout + factor(Year) , data = HGdata, se_type="HC1")
+#coeftest(hg_ols, vcov = vcovHC, type = "HC1")
+
+# Iv regression
+hg_ivreg <- iv_robust( DemVoteShare2 ~ Turnout + factor(Year) | 
+                    factor(Year) + DNormPrcp_KRIG, data = HGdata, se_type="HC1")
+#coeftest(hg_ivreg, vcov = vcovHC, type = "HC1")
+
+# Show result
+screenreg(l = list(hg_ols, hg_ivreg),
+          digits = 3,
+          # caption = 'title',
+          custom.model.names = c("OLS", "IV"),
+          custom.coef.names = NULL,  # add a class, if you want to change the names of variables.
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = TRUE, include.nobs = TRUE, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE,
+          custom.header = list("DemVoteShare2" = 1:2), # you can add header especially to indicate dependent variable 
+          stars = numeric(0),
+          omit.coef = "factor"
+          )
+```
+---
+```{r, cache=TRUE,eval=FALSE}
+# First stage regression 
+hg_1st <- lm(Turnout ~  factor(Year) + DNormPrcp_KRIG, data= HGdata)
+
+# F test
+linearHypothesis(hg_1st, 
+                 c("DNormPrcp_KRIG = 0" ), 
+                 vcov = vcovHC, type = "HC1")
+
+```
+---
+```{r, cache=TRUE,echo=FALSE}
+# First stage regression 
+hg_1st <- lm(Turnout ~  factor(Year) + DNormPrcp_KRIG, data= HGdata)
+
+# F test
+linearHypothesis(hg_1st, 
+                 c("DNormPrcp_KRIG = 0" ), 
+                 vcov = vcovHC, type = "HC1")
+
+```
+

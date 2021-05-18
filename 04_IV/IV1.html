@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Instrumental Variable Estimation 1: Framework</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Instructor: Yuta Toyama" />
+    <script src="IV1_files/header-attrs-2.7/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Instrumental Variable Estimation 1: Framework
+### Instructor: Yuta Toyama
+### Last updated: 2021-05-18
+
+---
+
+
+class: title-slide-section, center, middle
+name: logistics
+# Introduction
+
+---
+## Introduction: Endogeneity Problem and its Solution
+
+- This chapter introduces **instrumental variable (IV, 操作変数)** method as a solution to endogeneity problem.
+
+
+- The lecture plan
+    1. More on endogeneity issues
+    2. Framework
+    3. Implementation in R
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Endogeneity
+
+---
+## More Examples of Endogeneity Problem 
+
+- Talk more on endogeneity problems. 
+    1. Omitted variable bias
+    2. Measurement error
+    3. Simultaneity
+
+---
+## Example 1: More on Omitted Variable Bias 
+
+
+- Remember the wage regression equation (true model)
+`\begin{eqnarray}
+\log W_{i}	&amp;=&amp;  &amp; \beta_{0}+\beta_{1}S_{i}+\beta_{2}A_{i}+u_{i} \\
+E[u_{i}|S_{i},A_{i}]	&amp;=&amp; &amp; 0
+\end{eqnarray}`
+where `\(W_{i}\)` is wage, `\(S_{i}\)` is the years of schooling, and `\(A_{i}\)` is the ability. 
+
+- Suppose that you omit `\(A_i\)` and run the following regression instead. 
+`\begin{eqnarray}
+\log W_{i} = alpha_{0}+\alpha_{1} S_{i} + v_i
+\end{eqnarray}`
+Notice that `\(v_i = \beta_2 A_i + u_i\)`, so that `\(S_i\)` and `\(v_i\)` is likely to be correlated. 
+
+---
+
+## Does addition control variables solve OVB?
+
+- You might want to add more and more additional variables to capture the effect of ability.
+    - Test scores, GPA, SAT scores, etc...
+
+
+- However, how many variables should we conditioning so that `\(S_i\)` is indeed exogenous?
+
+
+- Multivariate regression is valid under **selection on observables**.
+
+
+- If there exists **unobserved heterogeneity** that matters both in wage and years of schooling, multivariate regression cannot deal with OVB.
+
+---
+## Example 2: Measurement error 
+
+- Reporting error, wrong understanding of the question, etc...
+
+- Consider the regression
+`$$y_{i}=\beta_{0}+\beta_{1}x_{i}^{*}+\epsilon_{i}$$`
+- Here, we only observe `\(x_{i}\)` with error: 
+`$$x_{i}=x_{i}^{*}+e_{i}$$`
+    - `\(e_{i}\)` is independent from `\(\epsilon_i\)` and `\(x_i^*\)` (called classical measurement error)
+    - You can think `\(e_i\)` as a noise added to the data.
+
+---
+
+- The regression equation is 
+
+`\begin{eqnarray}
+y_{i} &amp;=&amp; \  \beta_{0}+\beta_{1}(x_{i}-e_{i})+\epsilon_{i} \\
+	&amp;=&amp; \ \beta_{0}+\beta_{1}x_{i}+(\epsilon_{i}-\beta_{1}e_{i})
+\end{eqnarray}`
+
+- Then we have correlation between `\(x_{i}\)` and the error `\(\epsilon_{i}-\beta_{1}e_{i}\)`, violating the mean independence assumption.
+
+- Measurement error in explantory variables leads to smaller estimates, known as **attenuation bias**.
+
+---
+## Example 3: Simultaneity (同時性) or reverse causality
+
+- **Dependent and explanatory variable are determined simultaneously.**
+
+- Consider the demand and supply curve
+
+`\begin{eqnarray}
+q^{d}	=\beta_{0}^{d}+\beta_{1}^{d}p+\beta_{2}^{d}x+u^{d} \\
+q^{s}	=\beta_{0}^{s}+\beta_{1}^{s}p+\beta_{2}^{s}z+u^{s}
+\end{eqnarray}`
+
+- The equilibrium price and quantity are determined by `\(q^{d}=q^{s}\)`.
+
+---
+
+- In this case, 
+`$$p=\frac{(\beta_{2}^{s}z-\beta_{2}^{d}z)+(\beta_{0}^{s}-\beta_{0}^{d})+(u^{s}-u^{d})}{\beta_{1}^{d}-\beta_{1}^{s}}$$` 
+implying the correlation between the price and the error term. 
+
+- Putting this differently, the data points we observed is the intersection of these supply and demand curves. 
+
+---
+
+- How can we distinguish demand and supply?
+![Demand Supply](figs/fig_Demand_Supply.png)
+
+---
+## Causal Effect of Price on Quantity? 
+
+- What is a causal effect of price on quantity? What is the sign (if it exists)?
+
+
+- For consumer: Higher prices leads to lower demand.
+
+
+- For (price-taking) firms: Higher prices leads to more supply.
+
+
+- "Causal effect of price on quantity" is a meaningless concept unless you specify either demand or supply. 
+
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# IV Idea
+
+---
+## Idea of IV Regression
+
+- Let's start with a simple case. 
+`$$y_i = \beta_0 + \beta_1 x_i + \epsilon_i,  Cov(x_i, \epsilon_i) \neq 0$$`
+- Define the variable `\(z_i\)` named **instrumental variable (IV)** that satisfies the following conditions:
+    1. **Independence (独立性)**: `\(Cov(z_i, \epsilon_i) = 0\)`. No correlation between IV and error.
+    2. **Relevance (関連性)**: `\(Cov(z_i, x_i) \neq 0\)`. Correlation between IV and endogenous variable `\(x_i\)`.
+
+- Idea: Use the variation of `\(x_i\)` **induced by instrument `\(z_i\)`** to estimate the direct (causal) effect of `\(x_i\)` on `\(y_i\)`, that is `\(\beta_1\)`!.
+
+---
+
+## More on Idea
+
+1. Intuitively, the OLS estimator captures the correlation between `\(x\)` and `\(y\)`. 
+2. If there is no correlation between `\(x\)` and `\(\epsilon\)`, it captures the causal effect `\(\beta_1\)`. 
+3. If not, the OLS estimator captures both direct and indirect effect, the latter of which is bias.
+4. Now, let's capture the variation of `\(x\)` due to instrument `\(z\)`, 
+  - Such a variation should exist under **relevance** assumption.
+  - Such a variation should not be correlated with the error under **independence assumption**
+5. By looking at the correlation between such variation and `\(y\)`, you can get the causal effect `\(\beta_1\)`.
+
+---
+
+.middle[
+.center[
+&lt;img src="figs/fig_IV_idea.png" width="650"&gt;
+]
+]
+
+
+---
+## Identification of Parameter with IV
+
+- Taking the covariance between `\(y_i\)` and `\(z_i\)`
+$$
+Cov(y_i, z_i) = \beta_1 Cov(x_i, z_i) + Cov(\epsilon_i, z_i )
+$$
+- IV conditions implie that 
+$$
+\beta_1 = \frac{Cov(y_i, z_i)}{Cov(x_i, z_i)}
+$$
+
+- Question: Can you see the roles of IV conditions?
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# IV General Framework
+
+---
+## Multiple endogenous variables and instruments
+
+- Consider the model 
+`\begin{eqnarray}
+  Y_i = \beta_0 + \beta_1 X_{1i} + \dots + \beta_K X_{Ki} + \beta_{K+1} W_{1i} + \dots + \beta_{K+R} W_{Ri} + u_i, 
+\end{eqnarray}`
+  - `\(Y_i\)` is the dependent variable
+  - `\(X_{1i},\dots,X_{Ki}\)` are `\(K\)` endogenous (内生) regressors: `\(Cov(X_{ki}, u_i) \neq 0\)` for all `\(k\)`. 
+  - `\(W_{1i},\dots,W_{Ri}\)` are `\(R\)` exogenous (外生) regressors which are uncorrelated with `\(u_i\)`.  `\(Cov(W_{ri}, u_i) = 0\)` for all `\(r\)`. 
+  - `\(u_i\)` is the error term
+  - `\(Z_{1i},\dots,Z_{Mi}\)` are `\(M\)` instrumental variables
+  - `\(\beta_0,\dots,\beta_{K+R}\)` are `\(1+K+R\)` unknown regression coefficients
+
+
+---
+## Two Stage Least Squares (2SLS, 二段階最小二乗法)
+
+- Step 1: **First-stage regression(s)** 
+    - For each of the endogenous variables ( `\(X_{1i},\dots,X_{ki}\)` ), run an OLS regression on all IVs ( `\(Z_{1i},\dots,Z_{mi}\)` ), all exogenous variables ( `\(W_{1i},\dots,W_{ri}\)` ) and an intercept. 
+    - Compute the fitted values ( `\(\widehat{X}_{1i},\dots,\widehat{X}_{ki}\)` ). 
+
+
+- Step 2: **Second-stage regression** 
+    - Regress the dependent variable `\(Y_i\)` on **the predicted values** of all endogenous regressors ( `\(\widehat{X}_{1i},\dots,\widehat{X}_{ki}\)` ), all exogenous variables ( `\(W_{1i},\dots,W_{ri}\)`) and an intercept using OLS. 
+    - This gives `\(\widehat{\beta}_{0}^{TSLS},\dots,\widehat{\beta}_{k+r}^{TSLS}\)`, the 2SLS estimates of the model coefficients.
+
+---
+## Why 2SLS works
+- Consider a simple case with 1 endogenous variable and 1 IV. 
+
+- In the first stage, we estimate  
+`$$x_i = \pi_0 + \pi_1 z_i + v_i$$`
+by OLS and obtain the fitted value `\(\widehat{x}_i = \widehat{\pi}_0 + \widehat{\pi}_1 z_i\)`. 
+
+- In the second stage, we estimate
+`$$y_i = \beta_0 + \beta_1 \widehat{x}_i + u_i$$`
+
+- Since `\(\widehat{x}_i\)` depends only on `\(z_i\)`, which is uncorrelated with `\(u_i\)`, the second stage can estimate `\(\beta_1\)` without bias.
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Conditions for IV
+
+---
+## Conditions for Valid IVs: Necessary condition
+
+- Depending on the number of IVs, we have three cases
+    1. Over-identification (過剰識別): `\(M &gt; K\)`
+    2. Just identification (丁度識別): `\(M=K\)`
+    3. Under-identification (過小識別): `\(M &lt; K\)`
+
+
+- The necessary condition is `\(M \geq K\)`.
+    - We should have more IVs than endogenous variables.
+
+---
+## Sufficient condition
+- In a general framework, the sufficient conditions for valid instruments
+    1. **Independence**: `\(Cov( Z_{mi}, u_i) = 0\)` for all `\(m\)`.
+    2. **Relevance**: In the second stage regression, the variables 
+    `$$\left( \widehat{X}_{1i},\dots,\widehat{X}_{ki}, W_{1i},\dots,W_{ri}, 1 \right)$$`
+    are **not perfectly multicollinear**. 
+    
+    
+- What does the relevance condition mean? 
+
+---
+## Relevance condition 
+
+- In the simple example above, The first stage is   
+`$$x_i = \pi_0 + \pi_1 z_i + v_i$$`
+and the second stage is
+`$$y_i = \beta_0 + \beta_1 \widehat{x}_i + u_i$$`
+- The second stage would have perfect multicollinarity if `\(\pi_1 = 0\)` (i.e., `\(\widehat{x}_i = \pi_0\)`). 
+
+---
+&lt;br/&gt;&lt;br/&gt;
+- Back to the general case, the first stage for `\(X_k\)` can be written as 
+`$$X_{ki} = \pi_0 + \pi_1 Z_{1i} + \cdots + \pi_M Z_{Mi} + \pi_{M+1} W_{1i} + \cdots + \pi_{M+R} W_{Ri}$$`
+and one of `\(\pi_1 , \cdots, \pi_M\)` should be non-zero. 
+
+- Intuitively speaking, **the instruments should be correlated with endogenous variables after controlling for exogenous variables**
+
+---
+## Check Instrument Validity: Relevance
+
+- **Weak instruments (弱操作変数)** if those instruments explain little variation in the endogenous variables. 
+
+
+- Weak instruments lead to 
+    1. imprecise estimates (higher standard errors)
+    2. The asymptotic distribution would deviate from a normal distribution even if we have a large sample.
+
+---
+
+## A rule of thumb to check the relevance conditions. 
+
+- Consider the case with one endogenous variable `\(X_{1i}\)`.
+- The first stage regression  
+`$$X_k = \pi_0 + \pi_1 Z_{1i} + \cdots + \pi_M Z_{Mi} + \pi_{M+1} W_{1i} + \cdots + \pi_{M+R} W_{Ri}$$`
+- Conduct F test.
+`\begin{eqnarray}
+H_0 &amp; : \pi_1 = \cdots = \pi_M = 0 \\ 
+H_1 &amp; : otherwise
+\end{eqnarray}`
+
+- If we can reject this, we can say no concern for weak instruments.
+- A rule of thumbs is that the F statistic should be larger than 10. (Stock, Wright, and Yogo 2012)
+
+---
+## Independence (Instrument exogeneity)
+
+- This is essentially non-testable assumption, as in mean independence assumption in OLS.
+
+- Justification of this assumption depends on a context, institutional features, etc...
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

@@ -1,0 +1,365 @@
+---
+title: "Regression 2: Implementation in R"
+author: "Instructor: Yuta Toyama"
+date: "Last updated: `r Sys.Date()`"
+fig_width: 6 
+fig_height: 4 
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      countIncrementalSlides: no
+      highlightLines: yes
+      highlightStyle: github
+      ratio: '16:9'
+knit: pagedown::chrome_print
+---
+
+class: title-slide-section, center, middle
+name: logistics
+# Introduction
+
+---
+## Acknowledgement
+This note is based on  "Introduction to Econometrics with R". https://www.econometrics-with-r.org/index.html
+
+---
+## Preliminary: packages
+
+- We use the following packages:
+    - `AER` : 
+    - `dplyr` : data manipulation
+    - `stargazer` : output of regression results
+
+``` {r, warning = FALSE, message=FALSE}
+
+# Install package if you have not done so 
+# install.packages("AER")
+# install.packages("dplyr")
+# install.packages("stargazer")
+# install.packages("texreg")
+# install.packages("estimatr")
+
+# load packages
+library("AER")
+library("dplyr")
+library("stargazer")
+library("texreg")
+library("estimatr")
+```
+
+---
+## Empirical setting: Data from California School
+
+- Question: How does the student-teacher ratio affects test scores?
+- We use data from California school, which is included in `AER` package. 
+    - See here for the details: https://www.rdocumentation.org/packages/AER/versions/1.2-6/topics/CASchools
+
+```{r}
+# load the the data set in the workspace
+data(CASchools)
+```
+
+---
+
+- Use `class()` function to see `CASchools` is `data.frame` object.
+```{r}
+class(CASchools)
+```
+
+- We take 2 steps for the analysis.
+    - Step 1: Look at data (descriptive analysis) 
+    - Step 2: Run regression
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Step 1: Descriptive analysis
+---
+### Descriptive analysis
+
+- It is always important to grasp your data before running regression. 
+- `head()` function give you a first overview of the data.
+
+```{r}
+head(CASchools)
+
+```
+
+- Alternatively, you can use `View()` to see the entire dataset in browser window.
+
+---
+## Create variables
+
+- Create several variables that are needed for the analysis.
+- We use `dplyr` for this purpose.
+
+```{r}
+CASchools %>% 
+  mutate( STR = students / teachers ) %>% 
+  mutate( score = (read + math) / 2 ) -> CASchools 
+
+```
+
+---
+## Descriptive statistics
+
+
+- There are several ways to show descriptive statistics
+- The standard one is to use `summary()` function
+
+```{r,eval=FALSE}
+summary(CASchools)
+```
+
+---
+
+```{r,echo=FALSE}
+summary(CASchools)
+```
+
+---
+- This returns the desriptive statistics for all the variables in dataframe.
+- You can combine this with `dplyr::select` 
+
+```{r}
+CASchools %>% 
+  select(STR, score) %>%
+  summary()
+
+```
+
+---
+- You can do a bit lengthly thing manually like this.
+
+```{r}
+# compute sample averages of STR and score
+avg_STR <- mean(CASchools$STR) 
+avg_score <- mean(CASchools$score)
+
+# compute sample standard deviations of STR and score
+sd_STR <- sd(CASchools$STR) 
+sd_score <- sd(CASchools$score)
+
+# set up a vector of percentiles and compute the quantiles 
+quantiles <- c(0.10, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9)
+quant_STR <- quantile(CASchools$STR, quantiles)
+quant_score <- quantile(CASchools$score, quantiles)
+
+# gather everything in a data.frame 
+DistributionSummary <- data.frame(Average = c(avg_STR, avg_score), 
+                                  StandardDeviation = c(sd_STR, sd_score), 
+                                  quantile = rbind(quant_STR, quant_score))
+```
+
+---
+```{r}
+DistributionSummary
+```
+---
+- My personal favorite is to use `stargazer` function.
+
+```{r}
+
+stargazer(CASchools, type = "text")
+
+```
+
+---
+- You can choose summary statistics you want to report.
+
+```{r}
+
+CASchools %>% 
+  stargazer( type = "text", summary.stat = c("n", "p75", "sd") ) 
+
+```
+---
+<br/><br/>
+- See https://www.jakeruss.com/cheatsheets/stargazer/#the-default-summary-statistics-table for the details.
+- `stargazer` can be also used to report regression results.
+- But, we will use `texreg` instead.
+
+---
+## Scatter plot
+
+- Let's see how test score and student-teacher-ratio is correlated. 
+
+```{r, eval=FALSE}
+
+plot(score ~ STR, 
+     data = CASchools,
+     main = "Scatterplot of TestScore and STR", 
+     xlab = "STR (X)",
+     ylab = "Test Score (Y)")
+
+```
+
+---
+.center[
+```{r, fig.height=8, fig.width=12, echo=FALSE}
+
+plot(score ~ STR, 
+     data = CASchools,
+     main = "Scatterplot of TestScore and STR", 
+     xlab = "STR (X)",
+     ylab = "Test Score (Y)")
+
+```
+]
+
+---
+<br/><br/>
+- Use `cor()` to compute the correlation between two numeric vectors.
+```{r}
+cor(CASchools$STR, CASchools$score)
+``` 
+---
+class: title-slide-section, center, middle
+name: logistics
+# Step 2: Run regression
+---
+## Simple linear regression
+
+- We use `lm()` function to run linear regression
+
+- First, consider the simple linear regression 
+$$score_i = \beta_0 + \beta_1 size_i + \epsilon_i$$
+where $size_i$ is the class size (student-teacher-ratio).
+    - From now on we call student-teacher-ratio (STR) class size.
+    
+---
+- To run this regression, we use `lm`
+
+```{r}
+# First, we rename the variable `STR`
+CASchools %>% 
+  dplyr::rename( size = STR) -> CASchools
+
+# Run regression and save results in the varaiable `model1_summary`
+model1_summary <- lm( score ~ size, data = CASchools)
+
+# See the results
+summary(model1_summary)
+
+```
+
+---
+- Interpretations
+    - An increase of one student per teacher leads to 2.2 point decrease in test scores. 
+    - p value is very small. The effect of the class size on test score is significant.
+        - Note: Be careful. These standard errors are NOT heteroskedasiticity robust. We will come back to this point soon.
+    - $R^2 = 0.051$, implying that 5.1% of the variance of the dependent variable is explained by the model.
+    
+- You can add more variable in the regression (will see this soon)
+
+---
+## Robust standard error with `lm_robust`
+
+- We use `lm_robust()` in `estimatr` package to run regression with robust standard error.
+```{r}
+
+model1_robust <- lm_robust( score ~ size, data = CASchools, se_type = "HC1")
+
+summary(model1_robust)
+```
+
+- Notice that robust standard errors are larger than the one we obtained from `lm`!
+
+---
+## Report by texreg
+
+- `texreg` is useful to show the regression result. 
+    - `screenreg` function shows the table on R markdown.
+    - You can use `htmlreg` (`texreg`) to get html (latex) format.
+- `stargazer` is also used to show regression results, however it does not follow `lm_robust`.
+```{r, eval=FALSE}
+# Create output by `screenreg` function.
+screenreg(l=list(model1_summary, model1_robust),
+          digits = 3,
+          # caption = 'title',
+          custom.model.names = c("model1", "model1 Robust"),
+          custom.coef.names = NULL,  # add a class, if you want to change the names of variables.
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = TRUE, include.nobs = TRUE, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE,
+          custom.header = list("score" = 1:2), # you can add header especially to indicate dependent variable 
+          stars = numeric(0) # to delete star expression
+          )
+```
+
+
+---
+
+
+```{r, echo = FALSE }
+# Create output by `screenreg` function.
+screenreg(l=list(model1_summary, model1_robust),
+          digits = 3,
+          # caption = 'title',
+          custom.model.names = c("model1", "model1 Robust"),
+          custom.coef.names = NULL,  # add a class, if you want to change the names of variables.
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = TRUE, include.nobs = TRUE, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE,
+          custom.header = list("score" = 1:2), # you can add header especially to indicate dependent variable 
+          stars = numeric(0) # to delete star expression
+          )
+```
+
+
+
+
+---
+## Full results
+
+Taken from https://www.econometrics-with-r.org/7-6-analysis-of-the-test-score-data-set.html
+
+```{r, eval=FALSE}
+
+# estimate different model specifications
+spec1 <- lm_robust(score ~ size, data = CASchools, se_type = "HC1")
+spec2 <- lm_robust(score ~ size + english, data = CASchools, se_type = "HC1")
+spec3 <- lm_robust(score ~ size + english + lunch, data = CASchools, se_type = "HC1")
+spec4 <- lm_robust(score ~ size + english + calworks, data = CASchools, se_type = "HC1")
+spec5 <- lm_robust(score ~ size + english + lunch + calworks, data = CASchools, se_type = "HC1")
+
+# generate a table using texreg
+screenreg(l = list(spec1, spec2, spec3, spec4, spec5),
+          digits = 3,
+          # caption = 'title',
+          custom.model.names = c("(I)", "(II)", "(III)", "(IV)", "(V)"),
+          custom.coef.names = NULL,  # add a class, if you want to change the names of variables.
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = TRUE, include.nobs = TRUE, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE,
+          custom.header = list("score" = 1:2), # you can add header especially to indicate dependent variable 
+          stars = numeric(0) # to delete star expression
+          )
+```
+---
+```{r, echo=FALSE}
+
+# estimate different model specifications
+spec1 <- lm_robust(score ~ size, data = CASchools, se_type = "HC1")
+spec2 <- lm_robust(score ~ size + english, data = CASchools, se_type = "HC1")
+spec3 <- lm_robust(score ~ size + english + lunch, data = CASchools, se_type = "HC1")
+spec4 <- lm_robust(score ~ size + english + calworks, data = CASchools, se_type = "HC1")
+spec5 <- lm_robust(score ~ size + english + lunch + calworks, data = CASchools, se_type = "HC1")
+
+# generate a table using texreg
+screenreg(l = list(spec1, spec2, spec3, spec4, spec5),
+          digits = 3,
+          # caption = 'title',
+          custom.model.names = c("(I)", "(II)", "(III)", "(IV)", "(V)"),
+          custom.coef.names = NULL,  # add a class, if you want to change the names of variables.
+          include.ci = F,
+          include.rsquared = FALSE, include.adjrs = TRUE, include.nobs = TRUE, 
+          include.pvalues = FALSE, include.df = FALSE, include.rmse = FALSE,
+          custom.header = list("score" = 1:2), # you can add header especially to indicate dependent variable 
+          stars = numeric(0) # to delete star expression
+          )
+```
+- The coefficient on the class size decreases as we add more explantory variables. Can you explain why? (Hint: omitted variable bias)
+
+

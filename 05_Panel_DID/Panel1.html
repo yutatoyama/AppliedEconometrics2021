@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Panal Data 1: Framework</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Instructor: Yuta Toyama" />
+    <script src="Panel1_files/header-attrs-2.7/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Panal Data 1: Framework
+### Instructor: Yuta Toyama
+### Last updated: 2021-05-18
+
+---
+
+
+class: title-slide-section, center, middle
+name: logistics
+# Introduction
+
+---
+## Introduction
+
+- Panel data (パネルデータ)
+    - combination of crosssection (クロスセクション) and time series (時系列) data
+
+
+- Examples:
+    1. Person `\(i\)`'s income in year `\(t\)`.
+    2. Vote share in county `\(i\)` for the presidential election year `\(t\)`.
+    3. Country `\(i\)`'s GDP in year `\(t\)`. 
+
+
+- Panel data is useful
+    1. More variation (both cross-sectional and time series variation)
+    2. Can deal with **time-invariant unobserved factors**. 
+
+---
+## Course Plan
+
+- Framework
+
+- Implementation in R
+
+- **Difference-in-differences (DID, 差の差分法)** 
+
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Framework
+
+---
+  
+## Framework with Panel Data
+
+- Consider the model
+`$$y_{it} = \beta' x_{it} + \epsilon_{it}, E[\epsilon_{it} | x_{it} ] = 0$$`
+where `\(x_{it}\)` is a k-dimensional vector
+
+- If there is no correlation between `\(x_{it}\)` and `\(\epsilon_{it}\)`, you can estimate the model by OLS **(pooled OLS)**
+
+- A concern here is the omitted variable bias. 
+
+---
+
+## Introducing fixed effect (固定効果)
+
+- Suppose that `\(\epsilon_{it}\)` is decomposed as
+`$$\epsilon_{it} = \alpha_i + u_{it}$$`
+where `\(\alpha_i\)` is called **unit fixed effect (固定効果)**, which is the time-invariant unobserved heterogeneity. 
+
+- With panel data, we can control for the unit fixed effects by incorporating the dummy variable for each unit `\(i\)`!
+`$$y_{it} = \beta' x_{it} + \gamma_2 D2_i + \cdots + \gamma_n Dn_i + u_{it}$$`
+where `\(Dl_i\)` takes 1 if `\(l=i\)`. 
+
+---
+## Fixed Effect Model
+
+- Model
+`$$y_{it} = \beta' x_{it} + \alpha_i + u_{it}$$`
+
+
+- Assumptions:
+    1. `\(u_{it}\)` is uncorrelated with `\((x_{i1},\cdots, x_{iT})\)`, that is `\(E[u_{it}|x_{i1},\cdots, x_{iT} ] = 0\)`
+    2. `\((Y_{it}, x_{it})\)` are independent across individual `\(i\)`.
+    3. No outliers
+    4. No perfect multicollinarity between explantory variables `\(x_{it}\)` and fixed effects `\(\alpha_i\)`.
+
+---
+
+## Assumption 1: Mean independence
+
+- Assumption 1 is weaker than the assumption in OLS. 
+
+- Here, the time-invariant unobserved factor is captured by the fixed effect `\(\alpha_i\)`.
+
+
+---
+## Assumption 4: No Perfect Multicolinearity
+
+- Consider the following model
+`$$wage_{it} = \beta_0 + \beta_1 experience_{it} + \beta_2 male_{i} + \beta_3 white_{i} + \alpha_i + u_{it}$$`
+    - `\(experience_{it}\)` measures how many years worker `\(i\)` has worked before at time `\(t\)`.
+
+- Multicollinearity issue because of `\(male_{i}\)` and `\(white_{i}\)`.
+
+- Intuitively, we cannot estimate the coefficient `\(\beta_2\)` and `\(\beta_3\)` because those **time-invariant variables are captured by the unit fixed effect `\(\alpha_i\)`**.
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Estimation
+
+---
+## Estimation with Fixed Effects
+
+- Can estimate the model by adding dummy variables for each individual. 
+    - **least square dummy variables (LSDV) estimator**.
+    - Computationally demanding with many cross-sectional units
+
+- We often use the following **within transformation**.
+
+---
+## Estimation by within transformation 
+
+- Define the new variable `\(\tilde{Y}_{it}\)` as 
+`$$\tilde{Y}_{it} = Y_{it} - \bar{Y}_i$$`
+where `\(\bar{Y}_i = \frac{1}{T} \sum_{t=1}^T Y_{it}\)`. 
+
+- Applying the within transformation, can eliminate the unit FE `\(\alpha_i\)`
+`$$\tilde{Y}_{it} = \beta' \tilde{X}_{it} + \tilde{u}_{it}$$`
+
+- Apply the OLS estimator to the above equation!.
+
+---
+## Importance of within variation in estimation
+
+- The variation of the explanatory variable is key for precise estimation. 
+
+
+- Within transformation eliminates the time-invariant unobserved factor, 
+    - a large source of endogeneity in many situations. 
+
+
+- But, within transformation also absorbs the variation of `\(X_{it}\)`. 
+
+- Remember that 
+`$$\tilde{X}_{it} = X_{it} - \bar{X}_i$$`
+    - The transformed variable `\(\tilde{X}_{it}\)` has the variation over time `\(t\)` within unit `\(i\)`.
+    - If `\(X_{it}\)` is fixed over time within unit `\(i\)`, `\(\tilde{X}_{it} = 0\)`, so that no variation.
+
+---
+## Various Fixed Effects
+
+- You can also add **time fixed effects (FE)**
+`$$y_{it} = \beta' x_{it} + \alpha_i + \gamma_t + u_{it}$$`
+
+- The regression above controls for both **time-invariant individual heterogeneity** and **(unobserved) aggregate year shock**.
+
+- Panel data is useful to capture various unobserved shock by including fixed effects.
+
+---
+## Cluster-Robust Standard Errors
+
+- In OLS, we considered two types of error structures:
+  1. Homoskedasticity `\(Var(u_i) = \sigma^2\)`
+  2. Heteroskedasitcity `\(Var(u_i | x_i) = \sigma(x_i)\)`
+
+
+- They assume the independence between observations, that is `\(Cov(u_{i},u_{i'} ) = 0\)`.
+
+
+- In the panel data setting, we need to consider the **autocorrelation (自己相関)**.
+  - the correlation between `\(u_{it}\)` and `\(u_{it'}\)` across periods for each individual `\(i\)`.
+
+
+- **Cluster-robust standard error (クラスターに頑健な標準誤差)** considers such autocorrelation.
+    - The cluster is unit `\(i\)`. The errors within cluster are allowed to be correlated. 
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"countIncrementalSlides": false,
+"highlightLines": true,
+"highlightStyle": "github",
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

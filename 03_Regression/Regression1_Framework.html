@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Regression 1: Framework</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Instructor: Yuta Toyama" />
+    <script src="Regression1_Framework_files/header-attrs-2.7/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Regression 1: Framework
+### Instructor: Yuta Toyama
+### Last updated: 2021-05-18
+
+---
+
+class: title-slide-section, center, middle
+name: logistics
+
+
+# Introduction
+
+
+---
+
+## Observational Study (観察研究) is the norm, rather than the exception
+
+- Researchers in social science cannot always conduct RCT.
+
+- Instead, we need to use **observational data** in which treatment assignment may not be random.
+
+- An approach towards causal inference in this situation is **controlling observable characteristics** that causes a selection bias.
+
+- This approach is essentially estimation of **linear regression model (線形回帰モデル)** by **ordinally least squares (OLS, 最小二乗法)**.
+
+---
+## Overview
+
+- Introduce an idea of **matching (マッチング)** estimator.
+  - Identification of treatment effect under **selection on observable** assumption.
+  - Linear regression is a special case of matching estimator.
+- Linear regression: framework, practical topics, inference
+
+
+---
+class: title-slide-section, center, middle
+name: logistics
+
+
+# Selection on Observables, or Matching
+
+---
+
+## Matching to eliminate a selection bias
+
+- Idea: Compare **individuals with the same observed characteristics `\(X\)`** across treatment and control groups
+ 
+ 
+- If treatment choice is driven by observed characteristics (such as age, income, gender, etc), controlling for such factor would eliminate the selection.
+
+
+- Two key assumptions in matching
+
+
+---
+
+## Assumption 1: Selection on observables or Ignorability
+
+-   Let `\(X_{i}\)` denote the observed characteristics (sometimes called **covariates (共変量)**)
+    - age, income, education, race, etc..
+
+
+-   Assumption 1: `$$D_{i}\perp(Y_{0i},Y_{1i})\left|X_{i}\right.$$`
+
+
+-   **Conditional on `\(X_{i}\)`**, treatment assignment is random.
+
+
+---
+
+## Assumption 2: Overlapping assumption
+
+- Assumption 2: `$$P(D_{i}=1|X_{i}=x)\in(0,1)\ \forall x$$`
+
+- Given `\(x\)`, we should be able to observe people from both control and treatment group.
+
+- The probability `\(P(D_{i}=1|X_{i}=x)\)` is called **propensity score (傾向スコア)**.
+
+
+---
+
+## Identification of Treatment Effect Parameters
+
+-   The assumption implies that 
+`$$\begin{aligned}
+    E[Y_{1i}|D_{i} &amp; =1,X_{i}]=E[Y_{1i}|D_{i}=0,X_{i}]=E[Y_{1i}|X_{i}]\\
+    E[Y_{0i}|D_{i} &amp; =1,X_{i}]=E[Y_{0i}|D_{i}=0,X_{i}]=E[Y_{0i}|X_{i}]\end{aligned}$$`
+    
+    
+- Once you conditioning on `\(X_i\)`, the argument is essentially the same as the one in RCT.
+
+---
+
+
+-   The `\(ATT\)` conditional on `\(X_{i}=x\)` is given by 
+`$$\begin{aligned}
+    E[Y_{1i}-Y_{0i}|D_{i}=1,X_{i}] &amp; =E[Y_{1i}|D_{i}=1,X_{i}]-E[Y_{0i}|D_{i}=1,X_{i}]\\
+     &amp; =E[Y_{1i}|D_{i}=1,X_{i}]-E[Y_{0i}|D_{i}=0,X_{i}]\\
+     &amp; =\underbrace{E[Y_{i}|D_{i}=1,X_{i}]}_{avg\ with\ X_{i}\ in\ treatment}-\underbrace{E[Y_{i}|D_{i}=0,X_{i}]}_{avg\ with\ X_{i}\ in\ control}\end{aligned}$$`
+
+
+-   Intuition: Comparing the outcome across control and treatment groups after conditioning on `\(X_{i}\)`
+
+
+---
+
+## ATT `\(E[Y_{1i}-Y_{0i}|D_{i}=1]\)`
+
+-   ATT is given by 
+`$$\begin{aligned}
+    ATT &amp; =E[Y_{1i}-Y_{0i}|D_{i}=1]\\
+     &amp; =\int E[Y_{1i}-Y_{0i}|D_{i}=1,X_{i}=x]f_{X_{i}}(x|D_{i}=1)dx\\
+     &amp; =E[Y_{i}|D_{i}=1]-\int\left(E[Y_{i}|D_{i}=0,X_{i}=x]\right)f_{X_{i}}(x|D_{i}=1)\end{aligned}$$`
+
+---
+## ATT `\(E[Y_{1i}-Y_{0i}]\)`
+
+-   ATE is 
+`$$\begin{aligned}
+    ATE= &amp; E[Y_{1i}-Y_{0i}]\\
+    = &amp; \int E[Y_{1i}-Y_{0i}|X_{i}=x]f_{X_{i}}(x)dx\\
+    = &amp; \int E[Y_{1i}|D_{i}=1,X_{i}=x]f_{X_{i}}(x)dx +\int E[Y_{0i}|D_{i}=0,X_{i}=x]f_{X_{i}}(x)dx \\ 
+    = &amp; \int E[Y_{i}|D_{i}=1,X_{i}=x]f_{X_{i}}(x)dx +\int E[Y_{i}|D_{i}=0,X_{i}=x]f_{X_{i}}(x)dx \\ 
+    \end{aligned}$$`
+
+---
+
+## From Identification to Estimation
+
+- We need to estimate two conditional expectations `\(E[Y_{i}|D_{i}=1,X_{i}=x]\)` and `\(E[Y_{i}|D_{i}=0,X_{i}=x]\)`
+
+- Several ways to implement this.
+    1.   Regression: Nonparametric and Parametric
+    2.   Nearest neighborhood matching (最近傍マッチング)
+    3.   Propensity Score Matching (傾向スコアマッチング)
+    
+    
+- Here, I only explain a parametric regression as a way to implement the matching method.
+
+
+- See Appendix and textbooks for the details of matching estimators.
+
+---
+
+## From Matching to Linear Regression Model
+
+-   Assume that 
+`$$\begin{aligned}
+    E[Y_{i}|D_{i}=0,X_{i}=x] &amp; =\beta'x_{i}\\
+    E[Y_{i}|D_{i}=1,X_{i}=x] &amp; =\beta'x_{i}+\tau \end{aligned}$$`
+    
+- Here, treament effect is given by `\(\tau\)`.
+    
+- You will have a linear regression model
+    `$$y_{i}=\beta'x_{i}+\tau D_{i}+\epsilon_{i}, E[\epsilon_i | D_i, x_i] = 0$$`
+
+
+- Running a linear regression to obtain the treatment effect parameter `\(\tau\)`. 
+
+---
+class: title-slide-section, center, middle
+name: logistics
+
+
+# Linear Regression: Framework
+
+---
+## Regression (回帰) framework
+
+- **Linear regression model (線形回帰モデル)** is defined as `$$Y_{i}=\beta_{0}+\beta_{1}X_{1i}+\cdots+\beta_{K}X_{Ki}+\epsilon_{i}$$`
+    - `\(i\)`: index for observations. `\(i = 1,\cdots, N\)`.
+    - `\(Y_i\)`: **dependent variable (被説明変数)**
+    - `\(X_{ki}\)`: **explanatory variable (説明変数)**
+    - `\(\epsilon_i\)`: **error term (誤差項)**
+    - `\(\beta\)`: **coefficients (係数)**
+
+
+- Data (sample): `\(\{ Y_i , X_{i1}, \ldots, X_{iK} \}_{i=1}^N\)`
+
+
+- We want to estimate coefficients `\(\beta\)`.
+
+---
+
+## Ordinaly Least Squares (最小二乗法、OLS)
+
+-  OLS estimators are the minimizers of the sum of squared residuals: 
+`$$\min_{\beta_0, \cdots, \beta_K} \frac{1}{N} \sum_{i=1}^N (Y_i - (\beta_0 + \beta_1 X_{i1} + \cdots + \beta_K X_{iK}))^2$$`
+
+- Denote OLS estimators by `\(\hat{\beta}\)`.
+
+---
+
+## Assumptions for OLS
+
+1. **Random sample (ランダムサンプル)**: `\(\{ Y_i , X_{i1}, \ldots, X_{iK} \}\)` is i.i.d. (identically and independently distributed) drawn sample
+
+2. **mean independence**: `\(\epsilon_i\)` has zero conditional mean
+`$$E[\epsilon_i | X_{i1}, \ldots, X_{iK}] = 0$$`
+
+3. Large outliers are unlikely: The random variable `\(Y_i\)` and `\(X_{ik}\)` have finite fourth moments.
+
+4. **No perfect multicollinearity (多重共線性)**: No linear relationship between explanatory variables. 
+    
+    
+---
+
+## Theoretical Properties of OLS estimator
+
+1. **Unbiasedness**: Conditional on the explantory variables `\(X\)`, the expectation of the OLS estimator `\(\hat{\beta}\)` is equal to the true value `\(\beta\)`.
+`$$E[\hat{\beta} | X] = \beta$$`
+2. **Consistency**: As the sample size `\(N\)` goes to infinity, the OLS estimator `\(\hat{\beta}\)` converges to `\(\beta\)` in probability
+`$$\hat{\beta}\overset{p}{\longrightarrow}\beta$$`
+3. **Asymptotic normality (漸近正規性)**: discuss later.
+
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Linear Regression: Practical Topics 
+
+
+---
+
+## Interpretation of Regression Coefficients
+
+- Remember that 
+
+`$$Y_{i}=\beta_{0}+\beta_{1}X_{1i}+\cdots+\beta_{K}X_{Ki}+\epsilon_{i}$$`
+- The coefficient `\(\beta_k\)`: the effect of `\(X_k\)` on `\(Y\)` **ceteris paribus (all things being equal)**
+- Equivalently, if `\(X_k\)` is continuous random variable,
+$$\frac{\partial Y}{\partial X_k} = \beta_k $$
+- If we can estimate `\(\beta_k\)` without bias, can obtain **causal effect** of `\(X_k\)` on `\(Y\)`.
+
+---
+
+## Common Specifications in Linear Regression Model
+
+- Several specifications frequently used in empirical analysis.
+    1. Nonlinear term
+    2. log specification
+    3. dummy (categorical) variables
+    4. interaction terms (交差項)
+
+---
+
+## Nonlinear term (非線形項)
+- Non-linear relationship between `\(Y\)` and `\(X\)` in a linearly additive form 
+`$$Y_i = \beta_0 + \beta_1 X_i + \beta_2 X_i^2 + \beta_3 X_i^3 + \epsilon_i$$`
+- As long as the error term `\(\epsilon_i\)` appreas in a additively linear way, we can estimate the coefficients by OLS.
+    - Multicollinarity could be an issue if we have many polynomials (多項式).
+    - You can use other non-linear variables such as `\(\log(x)\)` and `\(\sqrt{x}\)`.
+
+---
+
+## log specification
+- Using `log` changes the interpretation of the coefficient `\(\beta\)` in terms of scales. 
+
+| Dependent | Explanatory | interpretation |
+|:-----------|:------------|:------------|
+| `\(Y\)` | `\(X\)`   |  1 unit increase in `\(X\)` causes `\(\beta\)` units change in Y | 
+| `\(\log Y\)` | `\(X\)`   |  1 unit increase in `\(X\)` causes `\(100 \beta \%\)` change in `\(Y\)` | 
+| `\(Y\)` | `\(\log X\)`   |  `\(1\%\)` increase in `\(X\)` causes `\(\beta / 100\)` unit change in `\(Y\)` | 
+| `\(\log Y\)` | `\(\log X\)`   |  `\(1\%\)` increase in `\(X\)` causes `\(\beta \%\)` change in `\(Y\)` | 
+
+---
+
+## Dummy variable (ダミー変数)
+
+- A **dummy variable** takes only 1 or 0. This is used to express qualititative information
+- Example: Dummy variable for race 
+
+`\begin{eqnarray}
+white_{i}=\left\{ \begin{array}{ll}
+1 &amp; if\ white\\
+0 &amp; otherwise
+\end{array} \right.
+\end{eqnarray}`
+
+- The coefficient on a dummy variable captures the difference of the outcome `\(Y\)` between categories
+`$$Y_i = \beta_0 + \beta_1 white_i + \epsilon_i$$`
+The coefficient `\(\beta_1\)` captures the difference of `\(Y\)` between white and non-white people.
+
+---
+## Interaction term (交差項)
+- You can add the interaction of two explanatory variables in the regression model.
+- For example: 
+`$$wage_i = \beta_0 + \beta_1 educ_i + \beta_2 white_i + \beta_3 educ_i \times white_i + \epsilon_i$$`
+    where `\(wage_i\)` is the earnings of person `\(i\)` and `\(educ_i\)` is the years of schooling for person `\(i\)`.
+- The effect of `\(educ_i\)` is 
+`$$\frac{\partial wage_i}{\partial educ_i} = \beta_1 + \beta_3 white_i,$$`
+- This allows for heterogeneous effects of education across races. 
+
+---
+## Measures of Fit
+
+- We often use `\(R^2\)` **(決定係数)** as a measure of the model fit. 
+- Denote **the fitted value** as `\(\hat{y}_i\)`
+`$$\hat{y}_i = \hat{\beta}_0 + \hat{\beta}_1 X_{i1} + \cdots + \hat{\beta}_K X_{iK}$$`
+    - Also called prediction from the OLS regression.
+
+---
+&lt;br/&gt;&lt;br/&gt;
+- `\(R^2\)` is defined as 
+`$$R^2 = \frac{SSE}{TSS},$$`
+    where
+    $$ \  SSE = \sum_i (\hat{y}_i - \bar{y})^2, \ TSS = \sum_i (y_i - \bar{y})^2$$
+- `\(R^2\)` captures the fraction of the variation of `\(Y\)` explained by the regression model.
+- Adding variables always (weakly) increases `\(R^2\)`.
+
+---
+
+- In a regression model with multiple explanatory variables, we often use **adjusted** `\(R^2\)` that adjusts the number of explanatory variables$$\bar{R}^2 = 1 - \frac{N-1}{N-(K+1)} \frac{SSR}{TSS}$$where$$SSR = \sum_i (\hat{y}_i - y_i)^2 (= \sum_i \hat{u}_i^2 )$$
+
+---
+class: title-slide-section, center, middle
+name: 
+# Linear Regression: Inference
+
+
+---
+## Statistical Inference of OLS Estimator
+
+- The OLS estimator is **random variables** as it depends on a drawn sample. 
+
+- We need to conduct **statistical inference** to evaluate statistical uncertainty of the OLS estimates.
+
+- Plan
+  - Asymptotic distribution (漸近分布) of OLS estimator
+  - Statistical inference: 
+  - Homoskedasticity (均一分散) vs Heteroskedasticity (不均一分散)
+
+
+
+
+---
+## Asymptotic Normality (漸近正規性) of OLS Estimator
+
+- Under the OLS assumption, the OLS estimator has **asymptotic normality**
+`$$\sqrt{N}(\hat{\beta}-\beta)\overset{d}{\rightarrow}N\left(0,V \right)$$`
+- `\(V\)` is called **asymptotic variance (matrix)** given by 
+
+$$
+`\begin{equation}
+\underbrace{V}_{(K+1)\times(K+1)}
+     = E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}E[\mathbf{x}_{i}'\mathbf{x}_{i}\epsilon_{i}^{2}]E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}
+\end{equation}`
+$$
+
+- `\(\mathbf{x}_{i}=\left( 1, X_{i1},\cdots,X_{iK} \right)'\)` is `\((K+1)\times 1\)` vector.
+
+---
+
+
+- We can **approximate** the distribution of `\(\hat{\beta}\)` by 
+`$$\hat{\beta} \sim N(\beta, V / N)$$`
+- The individual coefficient `\(\beta_k\)` follows 
+`$$\hat\beta_k \sim N(\beta_k, V_{kk} / N )$$`
+
+---
+## Estimation of Asymptotic Variance (漸近分散)
+
+- `\(V\)` is an unknown object. Need to be estimated. 
+- Consider the estimator `\(\hat{V}\)` for `\(V\)` using sample analogues 
+`$$\hat{V}=\left(\frac{1}{N}\sum_{i=1}^{N}\mathbf{x}_{i}'\mathbf{x}_{i}\right)^{-1}\left(\frac{1}{N}\sum_{i=1}^{N}\mathbf{x}_{i}'\mathbf{x}_{i}\hat{\epsilon}_{i}^{2}\right)\left(\frac{1}{N}\sum_{i=1}^{N}\mathbf{x}_{i}'\mathbf{x}_{i}\right)^{-1}$$`
+where `\(\hat{\epsilon}_i = y_i - (\hat{\beta}_0 + \cdots + \hat{\beta}_K X_{iK})\)` is the residual.
+- Technically speaking, `\(\hat{V}\)` converges to  `\(V\)` in probability.
+- We often use the (asymptotic) **standard error** `\(SE(\hat{\beta_k}) = \sqrt{\hat{V}_{kk} / N }\)`. 
+- The standard error is an estimator for the standard deviation of the OLS estimator `\(\hat{\beta_k}\)`.
+
+
+---
+## Hypothesis testing
+
+- You might want to test a particular hypothesis regarding those coefficients.
+    - Does x really affects y?
+    - Is the production technology the constant returns to scale?
+
+---
+## 3 Steps in Hypothesis Testing
+
+- Step 1: Consider the null hypothesis `\(H_{0}\)` and the alternative hypothesis `\(H_{1}\)` 
+`$$H_{0}:\beta_{1}=k,H_{1}:\beta_{1}\neq k$$`
+where `\(k\)` is the known number you set by yourself. 
+- Step 2: Define **t-statistic** by 
+`$$t_{n}=\frac{\hat{\beta_1}-k}{SE(\hat{\beta_1})}$$`
+
+- Step 3: We reject `\(H_{0}\)` is at `\(\alpha\)`-percent significance level if
+`$$|t_{n}|&gt;C_{\alpha/2}$$` 
+where `\(C_{\alpha/2}\)` is the `\(\alpha/2\)` percentile of the standard normal distribution. We say we **fail to reject** `\(H_0\)` if the above does not hold.
+---
+## Caveats on Hypothesis Testing
+
+- We often say `\(\hat{\beta}\)` is **statistically significant (統計的有意)** at `\(5\%\)` level if `\(|t_{n}|&gt;1.96\)` when we set `\(k=0\)`. 
+
+
+- You should also discuss **economic significance (経済的有意)** of the coefficient in analysis.
+
+
+- Case 1: Small but statistically significant coefficient.
+    - As the sample size `\(N\)` gets large, the `\(SE\)` decreases. 
+    
+    
+- Case 2: Large but statistically insignificant coefficient.
+    - The variable might have an important (economically meaningful) effect. 
+    - But you may not be able to estimate the effect precisely with the sample at your hand. 
+
+---
+
+## F test
+
+- We often test a composite hypothesis that involves multiple parameters such as 
+`$$H_{0}:\beta_{1} + \beta_2 = 0,\ H_{1}:\beta_{1} + \beta_2 \neq 0$$`
+- We use **F test** in such a case.
+
+---
+## Confidence interval (信頼区間)
+
+- 95% confidence interval
+
+`\begin{eqnarray}
+CI_{n}	&amp;=&amp; \left\{ k:|\frac{\hat{\beta}_{1}-k}{SE(\hat{\beta}_{1})}|\leq1.96\right\} \\
+    	&amp;=&amp; \left[\hat{\beta}_{1}-1.96\times SE(\hat{\beta}_{1}),\hat{\beta_{1}}+1.96\times SE(\hat{\beta}_{1})\right]
+\end{eqnarray}`
+
+
+- Interpretation: If you draw many samples (dataset) and construct the 95% CI for each sample, 95% of those CIs will include the true parameter.
+
+---
+## Homoskedasticity vs Heteroskedasticity
+
+- The error term `\(\epsilon_{i}\)` has **heteroskedasticity (不均一分散)** if `\(Var(u_{i}|X_{i})\)` depends on `\(X_{i}\)`. The asymptotic variance is
+$$
+`\begin{eqnarray}
+    V
+     = E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}E[\mathbf{x}_{i}'\mathbf{x}_{i}\epsilon_{i}^{2}]E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}
+\end{eqnarray}`
+$$
+- If not, we call `\(\epsilon_{i}\)` has **homoskedasticity (均一分散)**. In this case, 
+`$$V = E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}\sigma^{2}$$`
+where `\(\sigma^2 = V(\epsilon_i)\)`.
+
+---
+
+## Standard Errors in Practice
+
+- Standard errors under heteroskedasticity assumption is called **heteroskedasticity robust standard errors (不均一分散に頑健な標準誤差)**
+
+- In many statistical packages (including R and Stata), the standard errors for the OLS estimators are calculated under homoskedasticity assumption as a default. 
+
+- However, if the error has heteroskedasticity, the standard error under homoskedasticity assumption will be **underestimated**. 
+
+- In OLS, **we should always use heteroskedasticity robust standard error.**
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Appendix: Matching Estimator
+
+---
+
+## Estimation Methods
+
+-   We need to estimate `\(E[Y_{i}|D_{i}=1,X_{i}=x]\)` and
+    `\(E[Y_{i}|D_{i}=0,X_{i}=x]\)`
+
+-   Several ways to implement the above idea
+    1.   Regression: Nonparametric and Parametric
+    2.   Nearest neighborhood matching
+    3.   Propensity Score Matching
+
+---
+
+## Approach 1: Regression, or Analogue Approach
+
+-   Let `\(\hat{\mu}_{k}(x)\)` be an estimator of
+    `\(\mu_{k}(x)=E[Y_{i}|D_{i}=k,X_{i}=x]\)` for `\(k\in\{0,1\}\)`
+-   The analog estimators are 
+`$$\begin{aligned}
+    \hat{ATE} &amp; =\frac{1}{N}\sum_{i=1}^{N}\hat{\mu}_{1}(X_{i})-\hat{\mu}_{0}(X_{i})\\
+    \hat{ATT} &amp; =\frac{N^{-1}\sum_{i=1}^{N}D_{i}(Y_{i}-\hat{\mu}_{0}(X_{i}))}{N^{-1}\sum_{i=1}^{N}D_{i}}\end{aligned}$$`
+-   How to estimate `\(\mu_{k}(x)=E[Y_{i}|D_{i}=k,X_{i}=x]\)` ?
+
+---
+
+## Nonparametric Estimation
+
+-   Suppose that `\(X_{i}\in\{x_{1},\cdots,x_{K}\}\)` is discrete with small
+    `\(K\)`
+    -   Ex: two demographic characteristics (male/female,
+        white/non-white). `\(K=4\)`
+\bigskip
+-   Then, a nonparametric binning estimator is
+    `$$\hat{\mu}_{k}(x)=\frac{\sum_{i=1}^{N}\mathbf{1}\{D_{i}=k,X_{i}=x\}Y_{i}}{\sum_{i=1}^{N}\mathbf{1}\{D_{i}=k,X_{i}=x\}}$$`
+\bigskip
+-   Here, I do not put any parametric assumption on
+    `\(\mu_{k}(x)=E[Y_{i}|D_{i}=k,X_{i}=x]\)`.
+
+
+---
+
+## Curse of dimensionality
+
+-   Issue: Poor performance if `\(K\)` is large due to many covariates.
+  - So many potential groups, too few observations for each group.
+  - With `\(K\)` variables, each of which takes `\(L\)` values, `\(L^K\)` possible groups (bins) in total. 
+- This is known as **curse of dimensionality**.
+-   Relatedly, if `\(X\)` is a continuous random variable, can use kernel regression.
+
+---
+## Parametric Estimation, or going back to linear regression
+
+-   If you put parametric assumption such as 
+`$$\begin{aligned}
+    E[Y_{i}|D_{i}=0,X_{i}=x] &amp; =\beta'x_{i}\\
+    E[Y_{i}|D_{i}=1,X_{i}=x] &amp; =\beta'x_{i}+\tau_{0}\end{aligned}$$`
+    then, you will have a model
+    `$$y_{i}=\beta'x_{i}+\tau D_{i}+\epsilon_{i}$$`
+-   You can think the matching estimator as controlling for omitted
+    variable bias by adding (many) covariates (control variables)
+    `\(x_{i}\)`.
+
+---
+## Approach 2: `\(M-\)`Nearest Neighborhood Matching
+
+-   Idea: Find the counterpart in other group that is close to me.
+-   Define `\(\hat{y}_{i}(0)\)` and `\(\hat{y}_{i}(1)\)` be the estimator for
+    (hypothetical) outcomes when treated and not treated.
+    
+$$
+`\begin{equation}
+\hat{y}_{i}(0)=\begin{cases}
+y_{i} &amp; if\ D_{i}=0\\
+\frac{1}{M}\sum_{j\in L_{M}(i)}y_{j} &amp; if\ D_{i}=1
+\end{cases}`
+\end{equation}`
+$$
+
+-   `\(L_{M}(i)\)` is the set of `\(M\)` individuals in the opposite group who
+    are "close" to individual `\(i\)`
+-   Several ways to define the distance between `\(X_{i}\)` and `\(X_{j}\)`, such as
+    `$$dist(X_{i},X_{j})=||X_{i}-X_{j}||^{2}$$`
+-   Need to choose (1) `\(M\)` and (2) the measure of distance
+
+---
+## Approach 3: Propensity Score Matching
+
+- Use propensity score `\(P(D_{i}=1|X_{i}=x)\)` as a distance to define who is the closest to me.
+- Step 1: Estimate propensity score function by logit or probit using a flexible function of `\(X_i\)`.
+- Step 2: Calculate the propensity score for each observation. Use it to define the pair.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

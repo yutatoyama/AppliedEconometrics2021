@@ -1,0 +1,256 @@
+---
+title: "R Basics 2 -Data-"
+author: "Instructor: Yuta Toyama"
+date: "Last updated: `r Sys.Date()`"
+output: 
+  html_document:
+    theme: lumen
+    highlight: haddock 
+    #code_folding: show
+    toc: yes
+    number_sections: true
+    toc_depth: 2
+    toc_float: true
+    keep_md: true
+    df_print: paged
+  beamer_presentation:
+    theme: "Madrid"
+    colortheme: "lily"
+    slide_level: 2
+    keep_tex: true
+    includes:
+      in_header: "../beamer_header.tex"
+    df_print: tibble
+---
+
+
+```{r wrap-hook}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+```
+
+```{r}
+knitr::opts_chunk$set(collapse = FALSE, tidy = FALSE, linewidth = 75)
+```
+
+
+
+# Data frame
+
+## Acknowledgement
+
+ This note is largely based on Applied Statistics with `R`. https://daviddalpiaz.github.io/appliedstats/
+
+
+## Introduction 
+
+- A **data frame** is the most common way that we store and interact with data in this course.
+
+```{r}
+example_data = data.frame(x = c(1, 3, 5, 7, 9, 1, 3, 5, 7, 9),
+                          y = c(rep("Hello", 9), "Goodbye"),
+                          z = rep(c(TRUE, FALSE), 5))
+```
+
+- A data frame is a **list** of vectors.
+    - Each vector must contain the same data type
+    - The difference vectors can store different data types.
+
+---
+
+```{r}
+example_data
+```
+
+---
+
+- `write.csv` save (or export) the dataframe in `.csv` format.
+
+```{r, echo = FALSE}
+write.csv(example_data, "example-data.csv", row.names = FALSE)
+```
+
+<!-- >
+Unlike a list which has more flexibility, the elements of a data frame must all be vectors, and have the same length.
+
+```{r}
+example_data$x
+
+all.equal(length(example_data$x),
+          length(example_data$y),
+          length(example_data$z))
+
+str(example_data)
+
+nrow(example_data)
+ncol(example_data)
+dim(example_data)
+```
+< --> 
+
+## Load csv file
+
+- We can also import data from various file types in into `R`, as well as use data stored in packages.
+- Read `csv` file into R. 
+    - `read.csv()` function as default
+    - `read_csv()` function from the `readr` package. This is faster for larger data.
+
+```{r, message = FALSE, warning = FALSE}
+# install.packages("readr") 
+#library(readr)
+#example_data_from_csv = read_csv("example-data.csv")
+example_data_from_csv = read.csv("example-data.csv")
+```
+
+
+---
+
+- Note: This particular line of code assumes that the file `example_data.csv` exists in your current working directory.
+- The current working directory is the folder that you are working with. To see this, you type 
+```{r}
+getwd()
+```
+- If you want to set the working directory, use `setwd()` function
+```{r, eval = FALSE}
+setwd(dir = "directory path" )
+```
+
+<!-- >
+
+```{r}
+example_data_from_csv
+```
+
+A tibble is simply a data frame that prints with sanity. Notice in the output above that we are given additional information such as dimension and variable type.
+
+The `as_tibble()` function can be used to coerce a regular data frame to a tibble.
+
+```{r}
+library(tibble)
+example_data = as_tibble(example_data)
+example_data
+```
+< -->
+
+<!-- >
+Alternatively, we could use the "Import Dataset" feature in RStudio which can be found in the environment window. 
+(By default, the top-right pane of RStudio.)  
+Once completed, this process will automatically generate the code to import a file. 
+The resulting code will be shown in the console window. 
+In recent versions of RStudio, `read_csv()` is used by default, thus reading in a tibble.
+< -->
+
+## Examine dataframe
+
+- Inside the `ggplot2` package is a dataset called `mpg`. By loading the package using the `library()` function, we can now access `mpg`.
+
+```{r, message = FALSE, warning = FALSE}
+library(ggplot2)
+```
+
+---
+
+- Three things we would generally like to do with data:
+    - Look at the raw data.
+    - Understand the data. (Where did it come from? What are the variables? Etc.)
+    - Visualize the data.
+- To look at the data, we have two useful commands: `head()` and `str()`
+```{r}
+head(mpg, n = 10)
+```
+<!-- >
+The function `head()` will display the first `n` observations of the data frame. The `head()` function was more useful before tibbles. Notice that `mpg` is a tibble already, so the output from `head()` indicates there are only `10` observations. Note that this applies to `head(mpg, n = 10)` and not `mpg` itself. Also note that tibbles print a limited number of rows and columns by default. The last line of the printed output indicates which rows and columns were omitted.
+
+```{r}
+mpg
+```
+< -->
+
+--- 
+
+- The function `str()` will display the "structure" of the data frame.
+    - It will display the number of **observations** and **variables**, list the variables, give the type of each variable, and show some elements of each variable. 
+    - This information can also be found in the "Environment" window in RStudio.
+```{r}
+str(mpg)
+```
+
+<!-- >
+It is important to note that while matrices have rows and columns, data frames (tibbles) instead have observations and variables. When displayed in the console or viewer, each row is an observation and each column is a variable. However generally speaking, their order does not matter, it is simply a side-effect of how the data was entered or stored.
+
+In this dataset an observation is for a particular model-year of a car, and the variables describe attributes of the car, for example its highway fuel efficiency.
+
+To understand more about the data set, we use the `?` operator to pull up the documentation for the data.
+
+```{r, eval = FALSE}
+?mpg
+```
+< -->
+
+---
+
+-  `names()` function to obtain names of the variables in the dataset
+```{r}
+names(mpg)
+```
+
+- To access one of the variables **as a vector**, we use the `$` operator.
+```{r}
+mpg$year
+mpg$hwy
+```
+
+---
+
+- We can use the `dim()`, `nrow()` and `ncol()` functions to obtain information about the dimension of the data frame.
+
+```{r}
+dim(mpg)
+nrow(mpg)
+ncol(mpg)
+```
+
+## Subsetting data
+
+- Subsetting data frames can work much like subsetting matrices using square brackets, `[,]`. 
+- Here, we find fuel efficient vehicles earning over 35 miles per gallon and only display `manufacturer`, `model` and `year`.
+```{r}
+mpg[mpg$hwy > 35, c("manufacturer", "model", "year")]
+```
+
+---
+
+- An alternative would be to use the `subset()` function, which has a much more readable syntax.
+
+```{r, eval = FALSE}
+subset(mpg, 
+       subset = hwy > 35, 
+       select = c("manufacturer", "model", "year"))
+```
+
+---
+
+- Lastly, we could use the `filter` and `select` functions from the `dplyr` package which introduces the `%>%` operator from the `magrittr` package. 
+```{r, eval = FALSE}
+library(dplyr)
+mpg %>% 
+  filter(hwy > 35) %>% 
+  select(manufacturer, model, year)
+```
+- I will give you an assignment about `dplyr` package in the `DataCamp` as a makeup lecture.
+
+<!-- >
+All three approaches produce the same results. Which you use will be largely based on a given situation as well as user preference.
+
+When subsetting a data frame, be aware of what is being returned, as sometimes it may be a vector instead of a data frame. Also note that there are differences between subsetting a data frame and a tibble. A data frame operates more like a matrix where it is possible to reduce the subset to a vector. A tibble operates more like a list where it always subsets to another tibble.
+< -->

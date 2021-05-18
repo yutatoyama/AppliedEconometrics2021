@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Panel Data 3: Difference-in-differences</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Instructor: Yuta Toyama" />
+    <script src="Panel3_DID_files/header-attrs-2.7/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Panel Data 3: Difference-in-differences
+### Instructor: Yuta Toyama
+### Last updated: 2021-05-18
+
+---
+
+
+class: title-slide-section, center, middle
+name: logistics
+# Introduction
+
+---
+## Introduction
+
+-   **Difference-in-differences (DID, 差の差分法)** exploits the panel structure to estimate the causal effect.
+
+-   Two types of simple comparisons
+    -   Treatment and control group comparison: selection bias
+    -   Before v.s. after comparison: time trend
+
+-   DID combines those two comparisons to draw causal conclusion.
+
+---
+## DID in Figure
+
+.middle[
+.center[
+&lt;img src="figs/DID_fig.png" width="550"&gt;
+]
+]
+
+
+---
+## Plan of the Lecture
+
+- Framework
+
+- Implementation in a regression framework
+
+- Discussion on Parallel Trend Assumption
+
+
+---
+## Reference
+
+-   Angrist and Pischke "Mostly Harmless Econometrics" Chapter 5
+
+
+-   [Bertrand, Duflo, and Mullainathan (2004, QJE)](https://doi.org/10.1162/003355304772839588)
+    -   Discuss issues of calculating standard errors in the DID method.
+    
+    
+-   Ishise, Kitamura, Kudamatsu, Matsubayashi, and Murooka (2019) 
+    - Guidance on how to conduct policy evaluation with DID 
+    -   [Slide](https://slides.com/kudamatsu/did-manual/fullscreen)
+    -   [Paper](https://docs.google.com/viewer?a=v&amp;pid=sites&amp;srcid=ZGVmYXVsdGRvbWFpbnxta3VkYW1hdHN1fGd4OjM4YzkwYmVjM2ZmMzA2YWQ)
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Framework
+
+---
+## Framework
+
+-   Two periods: `\(t=1,2\)`. Treatment implemented at `\(t=2\)`.
+-   `\(Y_{it}\)`: observed outcome for person `\(i\)` in period `\(t\)`
+-   `\(G_{i}\)`: dummy for treatment group
+-   `\(D_{it}\)`: treatment status
+    -   `\(D_{it}=1\)` if `\(t=2\)` and `\(G_{i}=1\)`
+-   **Potential outcomes**
+    -   `\(Y_{it}(1)\)`: outcome for `\(i\)` when she is treated
+    -   `\(Y_{it}(0)\)`: outcome for `\(i\)` when she is not treated
+- Then
+`\begin{aligned}
+    Y_{it} &amp; =D_{it}Y_{it}(1)+(1-D_{it})Y_{it}(0)
+\end{aligned}`
+
+---
+## Identification
+
+-   Goal: ATT at `\(t=2\)`
+    `$$E[Y_{i2}(1)-Y_{i2}(0)|G_{i}=1]=E[Y_{i2}(1)|G_{i}=1]-E[Y_{i2}(0)|G_{i}=1]$$`
+-   What we observe
+       
+|        | Pre-period ( `\(t=1\)` )    |      Post ( `\(t=2\)` ) |
+|----------------------- | ------------------------ |------------------------|
+|Treatment ( `\(G_{i}=1\)` )  | `\(E[Y_{i1}(0) \mid G_{i}=1]\)`  | `\(E[Y_{i2}(1)\mid G_{i}=1]\)` |
+|Control ( `\(G_{i}=0\)`  )   | `\(E[Y_{i1}(0) \mid G_{i}=0]\)`  | `\(E[Y_{i2}(0)\mid G_{i}=0]\)`|
+
+
+
+- Under what assumptions can we the ATT?
+
+---
+## Simple Comparisons
+
+
+- Within period comparison 
+  - If `\(E[Y_{i2}(0)|G_{i}=1]=E[Y_{i2}(0)|G_{i}=0]\)`, ATT is identified by `$$ATT = E[Y_{i2}(1)|G_{i}=1]-E[Y_{i2}(0)|G_{i}=0]$$`
+  - Selection bias?
+  
+  
+- Before-after comparison
+  - If `\(E[Y_{i2}(0)|G_{i}=1]=E[Y_{i1}(0)|G_{i}=1]\)`, ATT is identified by `$$ATT = E[Y_{i2}(1)|G_{i}=1]-E[Y_{i1}(0)|G_{i}=1]$$`
+  - Time trend?
+  
+- More resonable assumption?
+
+
+---
+## Parallel Trend (並行トレンド) Assumption
+
+- Assumption:
+    `$$E[Y_{i2}(0)-Y_{i1}(0)|G_{i}=0]=E[Y_{i2}(0)-Y_{i1}(0)|G_{i}=1]$$`
+    
+- Interpretation: Change in the outcome *without treatment* is the same across two groups.
+
+- This puts an assumption on **counterfactual** trend in treatment group if it had not been treated.
+
+
+---
+## Difference-in-differences
+
+- Note that
+
+`\begin{aligned}
+    \underbrace{E[Y_{i2}(1)-Y_{i2}(0)|G_{i}=1]}_{ATT}= &amp; E[Y_{i2}(1)|G_{i}=1]-E[Y_{i2}(0)|G_{i}=1]\\
+    = &amp; E[Y_{i2}(1)|G_{i}=1]-E[Y_{i1}(0)|G_{i}=1]\\
+     &amp; -\underbrace{(E[Y_{i2}(0)|G_{i}=1]-E[Y_{i1}(0)|G_{i}=1])}_{=E[Y_{i2}(0)-Y_{i1}(0)|G_{i}=0]\ (pararell\ trend)}
+\end{aligned}`
+
+-   Thus, 
+`\begin{aligned}
+    ATT= &amp; E[Y_{i2}(1)-Y_{i1}(0)|G_{i}=1]-E[Y_{i2}(0)-Y_{i1}(0)|G_{i}=0]
+\end{aligned}`
+
+- ATT is identified by **the difference of two differences**
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Estimation
+
+
+---
+## Estimation Approach 1: Plug-in Estimator
+
+-   Remember that the ATT is identified by
+
+`\begin{aligned}
+    ATT= &amp; E[Y_{i2}(1)-Y_{i1}(0)|G_{i}=1]-E[Y_{i2}(0)-Y_{i1}(0)|G_{i}=0]
+\end{aligned}`
+
+-   Replace them with the sample average. 
+
+`\begin{aligned}
+    \hat{ATT=} &amp; \left\{ \bar{y}(t=2,G=1)-\bar{y}(t=1,G=1)\right\} \\
+     &amp; -\left\{ \bar{y}(t=2,G=0)-\bar{y}(t=1,G=0)\right\}
+\end{aligned}`
+
+where `\(\bar{y}(t,G)\)` is the sample average for group `\(G\)` in period
+    `\(t\)` .
+
+---
+## Example: Card and Kruger (1994, AER)
+
+- Question: Effects of the minimum wage increase on employment.
+- On April 1, 1992, New Jersey's minimum wage rose from 4.25 to 5.05 USD.
+- Compare fast-food restaurants in New Jersey (treament group) and eastern Pennsylvania (control group) before and after the rise.
+
+.middle[
+.center[
+&lt;img src="figs/CardKruger1994Table3.png" width="600"&gt;
+]
+]
+
+
+
+---
+## Estimation Approach 2: Linear Regression
+
+-   Run the following regression
+    `$$y_{it}=\alpha_{0}+\alpha_{1}G_{i}+\alpha_{2}T_{t}+\alpha_{3}D_{it}+\beta X_{it}+\epsilon_{it}$$`
+    -   `\(G_{i}\)`: dummy for treatment group
+    -   `\(T_{t}:\)`dummy for treatment period
+    -   `\(D_{it}=G_{i}\times T_{t}.\)` `\(\alpha_{3}\)` captures the ATT.
+
+
+-   Regression framework can incorporate covariates `\(X_{it}\)`, which is
+    important to control for observed confounding factors.
+
+---
+## Two-way Fixed Effects Estimator
+
+-   With panel data
+    `$$y_{it}=\alpha D_{it}+\beta X_{it}+\epsilon_{i}+\epsilon_{t}+\epsilon_{it}$$`
+
+  - `\(\epsilon_{i}\)` is individual FE 
+  - `\(\epsilon_{t}\)` is time FE.
+
+
+-   Use the cluster-robust standard errors for inference! (Bertrand, Duflo, and Mullainathan 2004, QJE)
+
+
+---
+## Event Study (イベントスタディ) Specification
+
+- With multiple periods, we can estimate **the treatment effect in the post-treatment periods**
+
+
+- The specification with `\(k\)`-periods lags and leads
+`$$y_{it}= \epsilon_{i}+\epsilon_{t}+ \sum_{\tau = -k}^k \gamma^\tau  D_{it}^\tau + \beta X_{it} + \epsilon_{it}$$`
+  - `\(D_{it}^\tau\)` takes 1 if unit `\(i\)` is in treatment group and period `\(t\)` is `\(\tau\)` period far from the treatment timing.
+  - Normalize `\(\gamma^{-1} = 0\)`. 
+  
+- Why include lags (i.e., `\(\tau = -k, \cdots, -1\)`)? See this later.
+
+
+---
+class: title-slide-section, center, middle
+name: logistics
+# Discussion on Parallel Trend Assumption
+
+---
+## Discussions on Parallel Trend
+
+- Parallel trend assumption can be violated in various situations.
+
+
+- If treatment status depends on **time-varying factors**, treatment and control group may have differential time trend in their outcome.
+  - Note: DID can only deal with **time-invariant factors**.
+
+
+- Example: Self-selection into treatment based on time-varying factor
+  - People participate in worker training program because they expected a future decrease in earnings before they enter the program.
+
+
+---
+## Diagnostics for Parallel Trends: Pre-treatment trends
+
+-   Check if the trends are parallel in the pre-treatment periods (プレトレンド)
+
+-   Requires data on multiple pre-treatment periods.
+
+-   Should do this if you have multiple pre-treatment periods.
+
+-   Note: this is only **diagnostics**. NOT a direct test of the assumption!
+    - Remember: Parallel trend assumption is not testable.
+    - You **should never say** "the key assumption for DID is satisfied if
+        the pre-treatment trends are parallel.
+
+---
+## Other Diagnostics: Placebo Effects in Pre-Treatment
+
+-   Idea: If both groups are indeed similar, there should be **no treatment effect in the pre-treatment period.** (placebo outcome)
+
+- We run the following event-study specification
+`$$y_{it}= \epsilon_{i}+\epsilon_{t}+ \sum_{\tau = -k}^k \gamma^\tau  D_{it}^\tau + \beta X_{it} + \epsilon_{it}$$`
+    
+    
+- The estimates of `\(\gamma^{\tau}\)` should be close to zero up to the beginning of treatment 
+
+---
+## Example: Autor (2003) (from Angrist and Pischke MHE)
+
+- Figure 5.2.4: Estimated impact of state courtsí adoption of an implied-contract exception to the employmentat-
+will doctrine on use of temporary workers (from Autor 2003). The dependent variable is the log of state
+temporary help employment in 1979 - 1995. Estimates are from a model that allows for e§ects before, during,
+and after adoption.
+
+.middle[
+.center[
+&lt;img src="figs/autor_2003.png" width="600"&gt;
+]
+]
+
+
+---
+## Example: Kubota, Onishi, and Toyama (2021)
+
+- To estimate the effect of receiving the SCP (特別定額給付金) on consumption, we run `$$y_{itw} = \alpha_i + \alpha_{iw} + \alpha_{tpw} + \sum_{k=-5}^5 \gamma^k D_{itw}^k + u_{itw}$$`
+  - Household `\(i\)` in week `\(w\)` in year `\(t (=2019, 2020)\)`.
+  - `\(D_{itw}^k = \mathbb{1} \{ T_i - w = k\}\)`, `\(T_i\)` is the timing of receiving the SCP (i.e., treatment)
+  - `\(y_{itw}\)`: consumption measure (total withdrawal, ATM withdrawal)
+
+---
+
+.middle[
+.center[
+&lt;img src="figs/fig_event_fullsample.png" width = 800&gt;
+]
+]
+
+---
+# Application
+
+
+---
+## Application: JAL-JAS Merger (Doi and Ohashi 2019)
+
+- Question: What is the effects of JAL-JAS merger on market outcome in airline industry.
+
+
+- They use both DID and structural estimation (構造推定) approach to answer the question.
+
+
+- Here, I only discuss their DID analysis.
+
+---
+## Background of JAL-JASmerger
+
+- Around 2000, JAL and JAS tried to create a holding company (持株会社) to merge.
+  - Market share: JAL 25%, JAS 24%, ANA 48%
+
+
+- The JFTC (公正取引委員会) issued an interim report in March 2002 and claimed that it was likely to be **a substantial restraint of competition in the domestic air passenger market**.
+
+
+- The merging party proposed remedial measures.
+  - Set the pre-merger price level as the price ceiling for the post-merger period.
+  - Release 9 slots at the most congested airport, and be assigned to new entrants.
+
+
+- The JFTC approved the merger with the remedies and it was consummated on Oct 2002.
+
+---
+## Theoretical Effects of a Merger
+
+- **Anticompetitive effect (反競争効果)**: The market becomes more concentrated, less competition, higher price, lower welfare.
+
+
+- **Efficiency effect (効率性効果)**: The merged party may become more efficient through scale effect, synergy, knowledge transfer, etc.
+
+
+- These two have different implications on economic welfare (Williamson's tradeoff)
+
+
+- The JFTC (公取委) reviews the merge case and decides whether approve it.
+
+---
+## Descriptive Statistics
+
+.middle[
+.center[
+&lt;img src="figs/DoiOhashi_Desc.png" &gt;
+]
+]
+
+
+---
+## DID Analysis
+
+- Outcome: Price, flight frequency, # of domestic passengers
+- 274 routes in 2000–2005
+- Regression equation
+$$
+`\begin{equation}
+\ln\left(y_{jmt}\right)=\gamma_{1}^{A}\cdot JJ_{jmt}+\gamma_{2}^{A}\cdot post_{t}+\gamma_{3}^{A}\cdot JJ_{jmt}\cdot post_{t}+\mathbf{x}_{jmt}^{\prime}\cdot\lambda^{A}+\kappa_{jmt}^{A}
+\end{equation}`
+$$
+  - `\(j\)`: firm, `\(m\)`: market (route), `\(t\)`: time (monthly)
+  - `\(post_{t}=1\)` if `\(t\)` is after October 2002.
+  - `\(JJ_{jmt}=1\)` if a firm j in market m is either JAL or JAS (JAL group).
+  - `\(\mathbf{x}_{jmt}^{\prime}\)`: covariates.
+- Control group: Non-merged domestic airlines (ANA and others)
+  - Either in the same market as JAL–JAL or in a market without JAL-JAS.
+
+---
+
+- Allow heterogeneous effects of a merger
+$$
+`\begin{aligned}
+\ln\left(y_{jmt}\right)= &amp; \gamma_{1}^{B}\cdot JJ_{jmt}+\gamma_{2}^{B}\cdot post_{t}+\gamma_{3}^{B}\cdot JJ_{jmt}\cdot post_{t}\\
+ &amp; +MtM_{jmt}\cdot\left(\gamma_{4}^{B}\cdot JJ_{jmt}+\gamma_{5}^{B}\cdot post_{t}+\gamma_{6}^{B}\cdot JJ_{jmt}\cdot post_{t}\right)\\
+ &amp; +MtO_{jmt}\cdot\left(\gamma_{7}^{B}\cdot JJ_{jmt}+\gamma_{8}^{B}\cdot post_{t}+\gamma_{9}^{B}\cdot JJ_{jmt}\cdot post_{t}\right)\\
+ &amp; +x_{jmt}^{\prime}\cdot\lambda^{B}+\kappa_{jmt}^{B}
+\end{aligned}`
+$$
+  - `\(MtM_{jmt}=1\)` if the route became a monopoly after the JJ merger
+  - `\(MtO_{jmt}=1\)` if it became oligopoly.
+
+---
+## Results
+
+.middle[
+.center[
+&lt;img src="figs/doiohadhi_DID.png" &gt;
+]
+]
+
+
+---
+## Robustness Check
+- Pretrend: Regress the outcome on route-FE, time FE, and time FE interacted with the dummy for control routes. 
+
+- Placebo test: Use the period b.w. April 2000 to July 2002. Consider placebo merger in July 2001 and see its effects using DID.
+
+
+---
+## Limitations of DID in this context
+
+- Is the choice of control group appropriate?
+
+
+- How to interpret the results?
+
+
+- Further analysis using structural estimation approach.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"countIncrementalSlides": false,
+"highlightLines": true,
+"highlightStyle": "github",
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
