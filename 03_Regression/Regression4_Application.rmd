@@ -12,6 +12,7 @@ output:
       ratio: '16:9'
 fig_width: 6
 fig_height: 4
+knit: pagedown::chrome_print
 
 ---
 class: title-slide-section, center, middle

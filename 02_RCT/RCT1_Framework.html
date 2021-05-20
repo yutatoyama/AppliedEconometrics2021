@@ -13,7 +13,7 @@ class: center, middle, inverse, title-slide
 
 # Randomized Control Trial 1: Framework Trial
 ### Instructor: Yuta TOYAMA (遠山 祐太)
-### Last updated: 2021-05-18
+### Last updated: 2021-05-20
 
 ---
 
@@ -81,10 +81,9 @@ D_{i}=\left\{ \begin{array}{ll}
 \end{eqnarray}`
 
 -   Define **potential outcomes**
-    -   `\(Y_{1i}\)`: outcome for `\(i\)` when she is treated **(treatment group、処置群)**
-    -   `\(Y_{0i}\)`: outcome for `\(i\)` when she is not treated **(control
-        group, 対照群)**
-&lt;br/&gt;&lt;br/&gt;
+    -   `\(Y_{1i}\)`: outcome for `\(i\)` when she is treated
+    -   `\(Y_{0i}\)`: outcome for `\(i\)` when she is not treated 
+
 -   With this, we can write 
 
 `\begin{eqnarray}
@@ -97,50 +96,25 @@ Y_{i} &amp; =  D_{i}Y_{1i}+(1-D_{i})Y_{0i}\\
 
 ---
 
-## Key Point 1 (/2) **Counterfactual** outcome is never observed.
-
-- We can observe `\((Y_{i},D_{i})\)` for each person `\(i\)`
-
-- However, can never observe `\(Y_{0i}\)` and `\(Y_{1i}\)` **simultaneously**.
-
-- Once person `\(i\)` took a particular treatment, observed outcome is potential outcome for that treatment.
-  
-- Known as **fundamental problem of program evaluation**
-
----
-
 ## Example: College Choice
 
-- Let `\(D_i\)` be whether go to college.
+- Let `\(D_i\)` be whether go to a college.
 - `\(Y_{1i}\)`: potential income if `\(i\)` goes to college, `\(Y_{0i}\)` potential income if not
 - `\(Y_i\)`: actual observed outcome
 
 |        | `\(Y_{1i}\)`       | `\(Y_{0i}\)`      | `\(D_i\)` | `\(Y_i\)` |
 | ------ | ------------- | ------------- | ----- | ----- |
-| Adam   | 80000 USD | 50000 USD | 1     |       80000 USD|
-| Bob    | 60000 USD | 60000 USD | 0     |       60000 USD|
-| Cindy  | 90000 USD | 60000 USD | 1     |       90000 USD|
-| Debora | 80000 USD | 70000 USD | 0     |       70000 USD|
-
-
----
-
-## Key Point 2 (/2): No spillover of treatment effect
-
-- **Stable Unit Treatment Value Assumption (SUTVA)**: Treatment effect for a person does **not depend on the treatment status of other people.**
-    
-- It rules out **externality (外部性)** and **general equilibrium effects (一般均衡効果)**.
-    
-- Ex: If **everyone** takes a job training, equilibrium wage would change, which affects the individual outcome.
-
-- Question: Any example of treatment effect that violates the SUTVA?
+| Adam   | 80000 USD | 70000 USD | 1     |       80000 USD|
+| Bob    | 70000 USD | 60000 USD | 0     |       60000 USD|
+| Cindy  | 90000 USD | 70000 USD | 1     |       90000 USD|
+| Debora | 80000 USD | 60000 USD | 0     |       70000 USD|
 
 ---
 ## Parameters of Interest
 
 -   **Individual treatment effect** `\(Y_{1i}-Y_{0i}\)`
     -   Key: allowing for heterogenous effects across people
-    -   Individual treatment effect cannot be obtained due to the fundamental problem.
+    -   Individual treatment effect cannot be obtained due to the fundamental problem (see next).
 
 -   Instead, we focus on the average effects
     
@@ -157,7 +131,7 @@ Y_{i} &amp; =  D_{i}Y_{1i}+(1-D_{i})Y_{0i}\\
 
 -   Assume that
     1.  linear (parametric) structure in `\(Y_{0i}\)`, and
-    2.  constant (homogenous) treatment effect, 
+    2.  constant (homogeneous) treatment effect, 
     
 `\begin{eqnarray}
 Y_{0i} &amp;=&amp;\beta_{0}+\epsilon_{i}\\
@@ -170,12 +144,43 @@ Y_{1i}-Y_{0i} &amp;=&amp;\beta_{1}
     -   Though, in practice, estimation of treatment effect relies on a
         parametric specification.
 
+
+---
+
+## Key Point 1 (/2) **Counterfactual** outcome is never observed.
+
+- We can observe `\((Y_{i},D_{i})\)` for each person `\(i\)`
+
+- However, can never observe `\(Y_{0i}\)` and `\(Y_{1i}\)` **simultaneously**.
+  - Ex: Cannot know Adam's income if he had not attended a college.
+
+- Once person `\(i\)` took a particular treatment, observed outcome is potential outcome for that treatment.
+  
+- Known as **fundamental problem of program evaluation**
+
+
+---
+
+## Key Point 2 (/2): No spillover of treatment effect
+
+- **Stable Unit Treatment Value Assumption (SUTVA)**: Treatment effect for a person does **not depend on the treatment status of other people.**
+    
+- It rules out **externality (外部性)** and **general equilibrium effects (一般均衡効果)**.
+    
+- Ex: If **everyone** takes a job training, equilibrium wage would change, which affects the individual outcome.
+
+- Question: Any example of treatment effect that violates the SUTVA?
+
+
+
 ---
 ## Selection Bias (セレクションバイアス)
 
--   To estimate treatment effect, the simplest way is to compare average outcomes between treatment and control group
-&lt;br/&gt;&lt;br/&gt;
--   Does this tell you average treatment effect? No in general!
+- Goal: Estimate treatment effect parameters (AET, ATT, conditional ATE, etc)
+
+- The simplest way is to compare average outcomes between treatment and control group
+
+- Does this tell you average treatment effect? No in general!
 
 - To see this, first, for `\(d=\{ 0, 1\}\)`,
 `$$E[Y_{i}|D_{i}=d] = E[Y_{di}|D_{i}=d]$$`
@@ -191,6 +196,23 @@ Y_{1i}-Y_{0i} &amp;=&amp;\beta_{1}
 = &amp; \underbrace{E[Y_{1i}-Y_{0i}|D_{i}=1]}_{ATT}\\
  &amp; +\underbrace{E[Y_{0i}|D_{i}=1]-E[Y_{0i}|D_{i}=0]}_{selection\ bias}
 \end{eqnarray}`
+
+---
+## Example: College Choice
+
+|        | `\(Y_{1i}\)`       | `\(Y_{0i}\)`      | `\(D_i\)` | `\(Y_i\)` |
+| ------ | ------------- | ------------- | ----- | ----- |
+| Adam   | 80000 USD | 70000 USD | 1     |       80000 USD|
+| Bob    | 70000 USD | 60000 USD | 0     |       60000 USD|
+| Cindy  | 90000 USD | 70000 USD | 1     |       90000 USD|
+| Debora | 80000 USD | 60000 USD | 0     |       70000 USD|
+
+
+- Simple Difference: `\(E[Y_{i}|D_{i}=1]-E[Y_{i}|D_{i}=0] = 85000 - 60000 = 25000\)`
+
+- ATT: `\(E[Y_{1i}-Y_{0i}|D_{i}=1] =  ( (80000-70000) + (90000-70000) )/2 = 15000\)`
+
+- Bias: `\(E[Y_{0i}|D_{i}=1]-E[Y_{0i}|D_{i}=0] = 70000 - 60000 = 10000\)`
 
 ---
 
@@ -259,6 +281,14 @@ class: title-slide-section, center, middle
 -   Buisiness: Ron Kohavi et al "Trustworthy Online Controlled Experiments" (和訳[「A/Bテスト実践ガイド」](https://www.amazon.co.jp/dp/4048930796)
 
 -   Andrew Lee ["Randomistas"](https://www.amazon.co.jp/dp/0300236123) (和訳：[「RCT大全」](https://www.amazon.co.jp/dp/4622089335))
+
+
+---
+## Example: A/B Test in Fund Raising by President Obama
+
+- [How Obama Raised $60 Million by Running a Simple Experiment](https://blog.optimizely.com/2010/11/29/how-obama-raised-60-million-by-running-a-simple-experiment/)
+
+- [あの大統領も140%の成果改善。アメリカ大統領とA/Bテストの意外な関係](https://juicer.cc/articles/archives/1273/)
 
 
 ---
@@ -389,17 +419,19 @@ $$ Y_i = \beta_0 + \beta_1 D_i + \beta' X_i + \epsilon_i$$
 
 Consider the estimator `\(\hat{\mu}_N\)` for the unknown parameter `\(\mu\)`. 
 
-1. Unbiasdeness (不偏性): The expectation of the estimator is the same as the true parameter in the population. 
+1. **Unbiasdeness (不偏性)**: The expectation of the estimator is the same as the true parameter in the population. 
 $$
   E[\hat{\mu}_N] = \mu
 $$
 
-2. Consistency (一致性): The estimator converges to the true parameter in probability. 
+2. **Consistency (一致性)**: The estimator converges to the true parameter in probability. 
 $$
+`\begin{equation}
 \forall \epsilon &gt;0, \lim_{N \rightarrow \infty} \ Prob(|\hat{\mu}_{N}-\mu|&lt;\epsilon)=1
+\end{equation}`
 $$
-    - Intuition: As the sample size gets larger, the estimator and the true parameter is close with probability one. 
-    - Note: a bit different from the usual convergence of the sequence. 
+  - Intuition: As the sample size gets larger, the estimator and the true parameter is close with probability one. 
+  - Note: a bit different from the usual convergence of the sequence. 
 
 ---
 
@@ -628,13 +660,16 @@ plot(fig)
 
 ---
 
-## Testing the difference of sample average between two groups 
+## Testing the difference of average between two groups 
 
 - Suppose that you want to test whether treatment effect is zero or not.
 
 - The null hypothesis
+
 $$
-H_0 : E[Y_{i}|D_{i}=1]-E[Y_{i}|D_{i}=0] = 0
+`\begin{equation}
+H_0: E[Y_{i}|D_{i}=1]-E[Y_{i}|D_{i}=0] = 0
+\end{equation}`
 $$
 
 - t-statistics in this case is 
