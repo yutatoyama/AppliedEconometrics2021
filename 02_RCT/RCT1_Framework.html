@@ -4,7 +4,7 @@
     <title>Randomized Control Trial 1: Framework Trial</title>
     <meta charset="utf-8" />
     <meta name="author" content="Instructor: Yuta TOYAMA (遠山 祐太)" />
-    <script src="RCT1_Framework_files/header-attrs-2.7/header-attrs.js"></script>
+    <script src="RCT1_Framework_files/header-attrs-2.6/header-attrs.js"></script>
     <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
   </head>
   <body>
@@ -13,7 +13,7 @@ class: center, middle, inverse, title-slide
 
 # Randomized Control Trial 1: Framework Trial
 ### Instructor: Yuta TOYAMA (遠山 祐太)
-### Last updated: 2021-05-18
+### Last updated: 2021-05-20
 
 ---
 
@@ -75,15 +75,14 @@ class: title-slide-section, center, middle
 
 `\begin{eqnarray}
 D_{i}=\left\{ \begin{array}{ll}
-1 &amp; treated\ (treatment\ group)\\
-0 &amp; not\ treated\ (control\ group)
+1 &amp; treated\ (treatment\ group, 処置群)\\
+0 &amp; not\ treated\ (control\ group, 対照群)
 \end{array} \right.
 \end{eqnarray}`
 
 -   Define **potential outcomes**
-    -   `\(Y_{1i}\)`: outcome for `\(i\)` when she is treated **(treatment group、処置群)**
-    -   `\(Y_{0i}\)`: outcome for `\(i\)` when she is not treated **(control
-        group, 対照群)**
+    -   `\(Y_{1i}\)`: outcome for `\(i\)` if she is treated 
+    -   `\(Y_{0i}\)`: outcome for `\(i\)` if she is not treated 
 &lt;br/&gt;&lt;br/&gt;
 -   With this, we can write 
 
@@ -589,7 +588,21 @@ result_CLT_data &lt;- data.frame(  Ybar_standardized_10 = result_CLT1,
 ```r
 # load tidyverse
 library("tidyverse")
+```
 
+```
+## Warning: package 'tidyverse' was built under R version 4.0.3
+```
+
+```
+## Warning: package 'ggplot2' was built under R version 4.0.3
+```
+
+```
+## Warning: package 'dplyr' was built under R version 4.0.4
+```
+
+```r
 # Use "melt" to change the format of result_data
 data_for_plot &lt;- tidyr::pivot_longer(data = result_CLT_data, cols = everything())
 

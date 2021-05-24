@@ -4,7 +4,7 @@
     <title>Regression 1: Framework</title>
     <meta charset="utf-8" />
     <meta name="author" content="Instructor: Yuta Toyama" />
-    <script src="Regression1_Framework_files/header-attrs-2.7/header-attrs.js"></script>
+    <script src="Regression1_Framework_files/header-attrs-2.6/header-attrs.js"></script>
     <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
   </head>
   <body>
@@ -13,7 +13,7 @@ class: center, middle, inverse, title-slide
 
 # Regression 1: Framework
 ### Instructor: Yuta Toyama
-### Last updated: 2021-05-18
+### Last updated: 2021-05-24
 
 ---
 
@@ -199,8 +199,35 @@ name: logistics
 
 -  OLS estimators are the minimizers of the sum of squared residuals: 
 `$$\min_{\beta_0, \cdots, \beta_K} \frac{1}{N} \sum_{i=1}^N (Y_i - (\beta_0 + \beta_1 X_{i1} + \cdots + \beta_K X_{iK}))^2$$`
+- First order conditions characterize the OLS estimator. Denote it by `\(\hat{\beta}\)`.
 
-- Denote OLS estimators by `\(\hat{\beta}\)`.
+---
+## Residual Regression (残差回帰) 
+
+
+- Consider the model
+ `$$Y_{i}=\beta_{0}+ \alpha D_i + \beta_{1}X_{1i}+\cdots+\beta_{K}X_{Ki}+\epsilon_{i}$$`
+
+- Suppose that you are interested in `\(\alpha\)` (say treatment effect parameter). 
+
+
+- Residual regression characterizes the OLS estimator of `\(\hat{\alpha}\)` in the following way.
+
+
+---
+## Frisch–Waugh–Lovell Theorem
+
+1. Run OLS regression of `\(D_i\)` on all other explanatory variables `\(1, X_{1i}, \cdots, X_{Ki}\)`. Obtain the residual `\(\hat{u_i^D}\)`.
+
+2. Run OLS regression of `\(Y_i\)` on all other explanatory variables `\(1, X_{1i}, \cdots, X_{Ki}\)`. Obtain the residual `\(\hat{u_i^Y}\)`.
+
+3. Run OLS regression of `\(\hat{u}_i^Y\)` on `\(\hat{u}_i^D\)` without constant term. The OLS estimator `\(\hat{\alpha}\)` is  
+$$
+\hat{\alpha} = \frac{\sum \hat{u}_i^Y \hat{u}_i^D}{\sum (\hat{u}_i^D)^2}
+$$
+
+
+
 
 ---
 
@@ -283,12 +310,12 @@ $$\frac{\partial Y}{\partial X_k} = \beta_k $$
 - A **dummy variable** takes only 1 or 0. This is used to express qualititative information
 - Example: Dummy variable for race 
 
-`\begin{eqnarray}
+\begin{eqnarray}
 white_{i}=\left\{ \begin{array}{ll}
 1 &amp; if\ white\\
 0 &amp; otherwise
 \end{array} \right.
-\end{eqnarray}`
+\end{eqnarray}
 
 - The coefficient on a dummy variable captures the difference of the outcome `\(Y\)` between categories
 `$$Y_i = \beta_0 + \beta_1 white_i + \epsilon_i$$`
@@ -354,10 +381,10 @@ name:
 - `\(V\)` is called **asymptotic variance (matrix)** given by 
 
 $$
-`\begin{equation}
+\begin{equation}
 \underbrace{V}_{(K+1)\times(K+1)}
      = E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}E[\mathbf{x}_{i}'\mathbf{x}_{i}\epsilon_{i}^{2}]E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}
-\end{equation}`
+\end{equation}
 $$
 
 - `\(\mathbf{x}_{i}=\left( 1, X_{i1},\cdots,X_{iK} \right)'\)` is `\((K+1)\times 1\)` vector.
@@ -431,10 +458,10 @@ where `\(C_{\alpha/2}\)` is the `\(\alpha/2\)` percentile of the standard normal
 
 - 95% confidence interval
 
-`\begin{eqnarray}
+\begin{eqnarray}
 CI_{n}	&amp;=&amp; \left\{ k:|\frac{\hat{\beta}_{1}-k}{SE(\hat{\beta}_{1})}|\leq1.96\right\} \\
     	&amp;=&amp; \left[\hat{\beta}_{1}-1.96\times SE(\hat{\beta}_{1}),\hat{\beta_{1}}+1.96\times SE(\hat{\beta}_{1})\right]
-\end{eqnarray}`
+\end{eqnarray}
 
 
 - Interpretation: If you draw many samples (dataset) and construct the 95% CI for each sample, 95% of those CIs will include the true parameter.
@@ -444,10 +471,10 @@ CI_{n}	&amp;=&amp; \left\{ k:|\frac{\hat{\beta}_{1}-k}{SE(\hat{\beta}_{1})}|\leq
 
 - The error term `\(\epsilon_{i}\)` has **heteroskedasticity (不均一分散)** if `\(Var(u_{i}|X_{i})\)` depends on `\(X_{i}\)`. The asymptotic variance is
 $$
-`\begin{eqnarray}
+\begin{eqnarray}
     V
      = E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}E[\mathbf{x}_{i}'\mathbf{x}_{i}\epsilon_{i}^{2}]E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}
-\end{eqnarray}`
+\end{eqnarray}
 $$
 - If not, we call `\(\epsilon_{i}\)` has **homoskedasticity (均一分散)**. In this case, 
 `$$V = E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}\sigma^{2}$$`
@@ -541,12 +568,12 @@ name: logistics
     (hypothetical) outcomes when treated and not treated.
     
 $$
-`\begin{equation}
+\begin{equation}
 \hat{y}_{i}(0)=\begin{cases}
 y_{i} &amp; if\ D_{i}=0\\
 \frac{1}{M}\sum_{j\in L_{M}(i)}y_{j} &amp; if\ D_{i}=1
-\end{cases}`
-\end{equation}`
+\end{cases}
+\end{equation}
 $$
 
 -   `\(L_{M}(i)\)` is the set of `\(M\)` individuals in the opposite group who

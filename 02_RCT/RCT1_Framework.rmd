@@ -73,15 +73,14 @@ class: title-slide-section, center, middle
 
 \begin{eqnarray}
 D_{i}=\left\{ \begin{array}{ll}
-1 & treated\ (treatment\ group)\\
-0 & not\ treated\ (control\ group)
+1 & treated\ (treatment\ group, 処置群)\\
+0 & not\ treated\ (control\ group, 対照群)
 \end{array} \right.
 \end{eqnarray}
 
 -   Define **potential outcomes**
-    -   $Y_{1i}$: outcome for $i$ when she is treated **(treatment group、処置群)**
-    -   $Y_{0i}$: outcome for $i$ when she is not treated **(control
-        group, 対照群)**
+    -   $Y_{1i}$: outcome for $i$ if she is treated 
+    -   $Y_{0i}$: outcome for $i$ if she is not treated 
 <br/><br/>
 -   With this, we can write 
 

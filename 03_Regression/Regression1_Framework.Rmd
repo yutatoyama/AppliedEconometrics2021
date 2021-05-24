@@ -64,7 +64,7 @@ name: logistics
 
 ---
 
-## Assumption 1: Selection on observables or Ignorability
+## Assumption 1: Selection on observables
 
 -   Let $X_{i}$ denote the observed characteristics (sometimes called **covariates (共変量)**)
     - age, income, education, race, etc..
@@ -74,6 +74,12 @@ name: logistics
 
 
 -   **Conditional on $X_{i}$**, treatment assignment is random.
+
+
+- This assumption is often referred in a different name:
+    - Selection on observables
+    - Ignorability
+    - Unconfoundedness
 
 
 ---
@@ -196,8 +202,45 @@ name: logistics
 
 -  OLS estimators are the minimizers of the sum of squared residuals: 
 $$\min_{\beta_0, \cdots, \beta_K} \frac{1}{N} \sum_{i=1}^N (Y_i - (\beta_0 + \beta_1 X_{i1} + \cdots + \beta_K X_{iK}))^2$$
+- First order conditions characterize the OLS estimator. Denote it by $\hat{\beta}$.
 
-- Denote OLS estimators by $\hat{\beta}$.
+---
+## Residual Regression (残差回帰) 
+
+
+- Consider the model
+ $$Y_{i}=\beta_{0}+ \alpha D_i + \beta_{1}X_{1i}+\cdots+\beta_{K}X_{Ki}+\epsilon_{i}$$
+
+- Suppose that you are interested in $\alpha$ (say treatment effect parameter). 
+
+
+- Residual regression characterizes the OLS estimator of $\hat{\alpha}$ in the following way.
+
+
+---
+## Frisch–Waugh–Lovell Theorem
+
+1. Run OLS regression of $D_i$ on all other explanatory variables $1, X_{1i}, \cdots, X_{Ki}$. Obtain the residual $\hat{u_i^D}$.
+
+2. Run OLS regression of $Y_i$ on all other explanatory variables $1, X_{1i}, \cdots, X_{Ki}$. Obtain the residual $\hat{u_i^Y}$.
+
+3. Run OLS regression of $\hat{u}_i^Y$ on $\hat{u}_i^D$ without constant term. The OLS estimator $\hat{\alpha}$ is  
+$$
+\hat{\alpha} = \frac{\sum \hat{u}_i^Y \hat{u}_i^D}{\sum (\hat{u}_i^D)^2}
+$$
+
+---
+## How to use FWL theorem
+
+1. Computational advantage if you are interested in a particular coefficient. Use this idea in estimation of panel data model.
+
+
+2. Useful to see how the coefficient of interest is estimated. We will see this later in relation to multicolinearity (多重共線性).
+
+
+3. Double machine learning (Chernozhukov et al 2018): Estimation of treatment effect parameters when so many covariates are available.
+
+
 
 ---
 
