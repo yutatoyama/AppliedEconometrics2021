@@ -13,7 +13,7 @@ class: center, middle, inverse, title-slide
 
 # Randomized Controlled Trial 2: Application
 ### Yuta Toyama
-### Last updated: 2021-05-18
+### Last updated: 2021-06-12
 
 ---
 
@@ -26,7 +26,7 @@ name: logistics
 
 # Today's Overview
 
-- I explain an application of randomized controlled trial.
+- Application of randomized controlled trial.
 
 
 - Reference: Ito, Ida, and Tanaka (2018) ["Moral Suasion and Economic Incentives: Field Experimental Evidence from Energy Demand"](https://www.aeaweb.org/articles?id=10.1257/pol.20160093) *American Economic Journal: Economic Policy*
@@ -45,36 +45,47 @@ name: logistics
 ---
 ## Motivation: Moral suasion or economic incentive?
 
-- Firms and governments often use **moral suasion** and **economic incentives** to influence intrinsic and extrinsic motivation for a variety of economic activities such as
-    - for governments
-        - energy conservation, smoking cessation, tax compliance, etc.
-    - and for firms and NPOs
-        - academic refereeing, blood donations, exercise, etc.
+- Use **moral suasion(道徳的訴え)** and **economic incentives(経済インセンティブ)** to influence intrinsic and extrinsic motivation 
+    - governments: energy conservation, smoking cessation, tax compliance, etc.
+    - firms and NPOs: academic refereeing, blood donations, exercise, etc.
+  
     
-- A central question for economists and policymakers designing such policies is whether appealing to intrinsic and extrinsic motivations can generate persistent effects on economic activities.
+- Question: Can appealing to intrinsic and extrinsic motivations can generate persistent effects on economic activities?
 
 ---
-## Moral suasion or economic incentive?
+## Moral suasion or economic incentive in electricity demand
 
-- The authors conduct a field experiment in the context of **electricity demand**. The first treatment is moral suasion by voluntary energy conservation. The second treatment is economic incentive by charging high marginal prices for electricity.
+- A field experiment in the context of **electricity demand**. 
 
-- Using household-level electricity consumption data of 30-minute intervals, they examine **how these treatments affect electricity usage in peak-demand hours** in which the marginal cost of electricity is substantially higher than other hours.
+
+- Two types of treatment
+  - moral suasion by **voluntary energy conservation**
+  - economic incentive by **charging high marginal prices for electricity**.
+
+
+- Use household-level electricity consumption data of 30-minute intervals.
+
+
+- Examine **how these treatments affect electricity usage in peak-demand hours** 
 
 ---
-## Habituation, Dishabituation, Spillover effect, and Habit formation
+## Mechanisms 
 
-- To test the persistent effects of moral suasion and economic incentives, theories in economics and psychology characterize four key predictions about an individual’s dynamic response to a stimulusd.
+- **Habituation**: 
+  - Repeated presentation of a stimulus might cause a decrease in reaction to the stimulus. 
+  - Ex: Animals strongly react to a stimulus when it is presented for the first time, but their responses often gradually wane when the same intervention is repeated over time. 
+  
 
-- **Habituation**: Repeated presentation of a stimulus might cause a decrease in reaction to the stimulus. For example, animals strongly react to a stimulus when it is presented for the first time, but their responses often gradually wane when the same intervention is repeated over time. 
+- **Dishabituation**: 
+  - Declined responses can be restored to an original level either by providing a new type of treatment, a stronger or weaker intensity of the same treatment, or the same treatment with a sufficient time interval between interventions. 
 
-- **Dishabituation**: Declined responses, as a result of habituation, can be restored to an original level either by providing a new type of treatment, a stronger or weaker intensity of the same treatment, or the same treatment with a sufficient time interval between interventions. 
-
----
-&lt;br/&gt;&lt;br/&gt;
 
 - **Spillover effect**: Treatment effects might spillover nontreatment periods. 
 
+
 - **Habit formation**: treatment effects might continue to exist after the final intervention but decay over time.
+
+
 
 ---
 
@@ -88,36 +99,42 @@ name: logistics
 
 - Period: The summer of 2012 and the winter of 2013
 
+
 - Place: The Keihanna area of Kyoto prefecture in Japan
 
-- Participants: 691 households. Every household received an advanced electricity meter, so-called "smart meter", an in-home display, and the generous participation reward (¥24,000).
 
-- Smart meter can collect household-level electricity usage at 30-minute intervals.
+- Participants: 691 households.
+  - Every household received "smart meter" and the generous participation reward (¥24,000).
+  - Smart meter can collect household-level electricity usage at 30-minute intervals.
 
-- This experiment is RCT for self-selected participants, not RCT for a purely randomly selected sample of the population.
+
 
 
 ---
-### All groups get in-home displays: real-time usage and price
+## In-home displays: real-time usage and price
 
 .middle[
 .center[
 &lt;img src="figs/display.png" height="500"&gt;
 ]
 ]
----
-## Limitation
-
-- Due to the experimal design, RCT for self-selected participants, it is important to consider carefully the **external validity** of the experiment, although random assignment of treatments guarantees the internal validity of the experiment
-
-- A survey for a random sample of 717 households in the experiment area allows to investigate the external validity regarding observable characteristics of the experimental sample. The results are shown on Table 1 in the next page.
-
 
 ---
+## Discussin on External Validity
 
-## Balance check and external validity
+- RCT for self-selected participants
+  - OK for internal validity
+  - need to carefully discuss the **external validity** of the experiment
+  
+  
+- Conduct a survey for a random sample of 717 households in the experiment area (next page)
 
-- The other suvey was conducted prior to treatment assignment and collected demographic information, presentrd in columns 1,2 and 3.
+
+
+---
+
+## Balance check and External Validity
+
 
 .middle[
 .center[
@@ -130,7 +147,7 @@ name: logistics
 
 - **Control Group**: The 153 customers in this group received no other treatment.
 
-- **Moral Suasion Group**: The 154 customers in this group received “moral suasion for energy conservation.” which we describe below.
+- **Moral Suasion Group**: The 154 customers in this group received “moral suasion for energy conservation.”
 
 - **Economic Incentive Group**: The 384 customers in this group received “economic incentives for energy conservation.” 
 
@@ -138,19 +155,33 @@ name: logistics
 ---
 ## Moral suasion treatment
 
-- **Treatment hours** were predetermined — 1 pm to 4 pm for the summer and 6 pm to 9 pm for the winter, the system peak-demand hours in Japan.
-- A **treatment day** had to be a weekday in which the day-ahead maximum temperature forecast exceeded 31°C (88°F) for the summer and was lower than 14°C (57°F) for the winter.
-- Example treatment date, August 21: 
-    - On August 20, the forecast maximum temperature for August 21 was reported to be above 31°C (88°F). 
-    - Then, they delivered **notifications** to customers at 4 pm on August 20 by a text message to their in-home displays, cell phones, and computers. They can view the message between 4 pm on August 20 and 4 pm on August 21. 
-    - The text message sent to the moral suasion group was **“Notice of Demand Response: In the following critical peak-demand hours, please reduce your electricity usage: 1 pm– 4 pm on Tuesday, August 21.”** 
+- **Treatment hours** were predetermined 
+  — 1 pm to 4 pm for the summer 
+  - 6 pm to 9 pm for the winter
+  
+  
+- A **treatment day**: a weekday in which 
+  - the day-ahead maximum temperature forecast exceeded 31°C (88°F) for the summer and
+  - lower than 14°C (57°F) for the winter.
+
+---
+## Example treatment date, August 21: 
+
+
+- On August 20, the forecast maximum temperature for August 21 was reported to be above 31°C (88°F). 
+
+- Then, they delivered **notifications** to customers at 4 pm on August 20 by a text message to their in-home displays, cell phones, and computers. They can view the message between 4 pm on August 20 and 4 pm on August 21. 
+
+- The text message sent to the moral suasion group was **“Notice of Demand Response: In the following critical peak-demand hours, please reduce your electricity usage: 1 pm– 4 pm on Tuesday, August 21.”** 
 
 ---
 ## Economic incentive treatment
 
 - Treatment hours and days are same as the moral suasion treatment.
 
-- On treatment days, the economic incentive group had a price increase of 40, 60, or 80 yen/kWh from the baseline price 25 yen/kWh to 65, 85, or 105 yen/kWh.
+- Baseline price: 25 yen/kWh
+
+- On treatment days, 65, 85, or 105 yen/kWh.
 
 - For example, at 4 pm on August 20, the economic incentive group received this message, **“Notice of Demand Response: In the following critical peak-demand hours, you will be charged a very high electricity price, so please reduce your electricity usage: 1 pm– 4 pm on Tuesday, August 21. The price will be 85 yen (+ 60 yen) per kWh.”**
 
@@ -158,11 +189,17 @@ name: logistics
 ## Economic incentive treatment in detail
 
 - For a given treatment day, all customers had the same critical peak price.
+
+
 - They randomized the prices across the treatment days. 
     - They divided the treatment days into **treatment cycles**, which consisted of three treatment days. 
     - And each cycle included a treatment day with 65, 85, and 105 yen/kWh, in which the order of the three prices in each cycle is randomized. 
 
-- Example of two treatment cycles around August 21: The day-ahead forecasts for the maximum temperatures exceeded the threshold for August 17, 21, 22, 28, 29, and 31. August 17, 21, and 22 as a cycle and August 28, 29, and 31 as another cycle are grouped. They randomized the three critical peak prices in each cycle. As a result, customers had prices of 65, 105, 85, 85, 65, and 105 yen for these six treatment days.
+
+- Example of two treatment cycles around August 21: 
+  - The day-ahead forecasts for the maximum temperatures exceeded the threshold for August 17, 21, 22, 28, 29, and 31. 
+  - August 17, 21, and 22 as a cycle and August 28, 29, and 31 as another cycle are grouped. 
+  - They randomized the three critical peak prices in each cycle. As a result, customers had prices of 65, 105, 85, 85, 65, and 105 yen for these six treatment days.
 
 
 ---
@@ -183,16 +220,18 @@ name: logistics
 
 
 ---
-- OLS model: 
-`$$ln x_{it} = \beta M_{it} + \gamma E_{it} + \theta_i +\lambda_t + \eta_{it}$$`
-    - `\(ln x_{it}\)`: the natural log of electricity usage for household i in a 30-minute interval t 
-    - `\(M_{it}\)`: equals one if household i is in the moral suasion group and receives a treatment in t
-    - `\(E_{it}\)`: equals one if household i is in the economic incentive group and receives a treatment in t
+## Regression Model
+- Regression: 
+`$$\ln x_{it} = \beta M_{it} + \gamma E_{it} + \theta_i +\lambda_t + \eta_{it}$$`
+    - `\(\ln x_{it}\)`: the natural log of electricity usage for household i in a 30-minute interval t 
+    - `\(M_{it}\)`: 1 if the moral suasion group and receives a treatment in t
+    - `\(E_{it}\)`: 1 if household i is in the economic incentive group and receives a treatment in t
     - `\(\theta_i\)`: household fixed effects 
     - `\(\lambda_t\)`: time fixed effect
-    - the clustered standard errors at the household level to adjust for serial correlation.
     
-- The authors included data from the preexperiment days and treatment days in this regression and they include only treatment hours (1~4 pm for the summer and 6~9 pm for the winter) to estimate the treatment effects on these hours.
+    
+- Sample period: the pre-experiment days and treatment days 
+  - only treatment hours (1~4 pm for the summer and 6~9 pm for the winter)
 
 ---
 
@@ -202,26 +241,46 @@ name: logistics
 ]
 ]
 
-- Moral suasion caused a reduction in peak-hour electricity usage by 0.031 log points (3.1% `\(= exp(-0.031)-1\)` ) for the summer treatment days and by 0.032 log points (3.2%) for the winter treatment days.
-- Economic incentive caused  a reduction in peak-hour electricity usage by 0.167 log points (15.4%) for the summer and 0.173 log points (15.9%) for the winter.
-- The treatment effects of the economic incentive are statistically different from those of moral suasion at the 1 percent significance level.
 ---
-### Response to different marginal prices
+## Summary of Results
 
-- Columns 2 and 4 say that consumers reduced usage more in response to higher marginal prices. 
 
-- The point estimates indicate a monotonic relationship between price and response.
+- Moral suasion caused a reduction in peak-hour electricity usage by 
+  - 0.031 log points (3.1% `\(= exp(-0.031)-1\)` ) for the summer treatment days 
+  - 0.032 log points (3.2%) for the winter treatment days.
 
-- This finding implies that households indeed responded to marginal prices and consumed electricity according to their demand curves. 
 
-- This result has an important implication for energy policy because regulators and utility companies often believe that electricity consumers do not respond to electricity prices at all, and therefore, a price-based policy is not a practical solution to mitigate problems on the retail side of electricity markets.
+- Economic incentive caused a reduction in peak-hour electricity usage by
+  - 0.167 log points (15.4%) for the summer and
+  - 0.173 log points (15.9%) for the winter.
+
+
+- The difference of treatment effects are statistically different at 1% significance level.
+
+---
+## Response to different marginal prices
+
+- Consumer reduced usage more in response to higher marginal prices. 
+  - a monotonic relationship between price and response.
+
+
+- **Price does matter!!**
+
+
+- An important implication for energy policy 
+  - Regulators and utility companies often believe that electricity consumers do not respond to electricity prices at all,
+  - and therefore, a price-based policy is not a practical solution to mitigate problems on the retail side of electricity markets.
+  
+  
 
 ---
 ## Result - Habituation and Dishabituation
 
-- 15 summer treatment days are devided into five cycles, and 21 winter treatment days are devided into seven cycles so that each cycle has 3 treatment days with 65 yen, 85 yen, and 105 yen as the peak-hour prices.
+- Treatment cycles
+  - 15 summer treatment days are divided into five cycles, 
+  - 21 winter treatment days are divided into seven cycles
 
-- OLS model: 
+- Regression: 
 `$$ln x_{it} = \sum_{c\in C}(\beta_c M_{itc} + \gamma_c E_{itc}) + \theta_i +\lambda_t + \eta_{it}$$`
     - where `\(\beta_c\)` and `\(\gamma_c\)` are the effects of moral suasion and economic incentives for treatment cycle c.
 
@@ -253,21 +312,32 @@ name: logistics
 ]
 
 ---
+## Summary
 
 - For moral suasion group, habituation and dishabituation are significant.
 
+
 - For economic incentive group, habituation is smaller.
 
-- Four key implications
-    1. Both moral suasion and economic incentives are likely to produce sizable policy impacts in the short run.
 
-    2. However, the effect of moral suasion is likely to habituate fast when the intervention is repeated over time. 
+- The average price elasticities and standard errors are 
+  - −0.136 (0.017) for the summer and −0.141 (0.018) for the winter, 
+  - Similar to those found in previous studies. 
+  - This provides suggestive evidence of external validity of the experimental sample.
 
-    3. The habituated response to moral suasion can recover back to an original level by providing a sufficient time interval between interventions. 
 
-    4. The effect of economic incentives is much less likely to habituate than moral suasion is.
 
-- The average price elasticities and standard errors are −0.136 (0.017) for the summer and −0.141 (0.018) for the winter, which are similar to those found in previous studies. This provids suggestive evidence of external validity of the experimental sample.
+---
+## Four key implications
+
+- Both moral suasion and economic incentives are likely to produce sizable policy impacts in the short run.
+
+- However, the effect of moral suasion is likely to habituate fast when the intervention is repeated over time. 
+
+- The habituated response to moral suasion can recover back to an original level by providing a sufficient time interval between interventions. 
+
+- The effect of economic incentives is much less likely to habituate than moral suasion is.
+
 
 ---
 ## Result - Spillover effect
@@ -284,7 +354,7 @@ name: logistics
 ---
 ## Result - Habit formation
 
-- To test for habit formation, they collected data for the post-intervention period, when households did not receive any treatment.
+- Collecte data for the post-intervention period (i.e., no treatment)
 
 .middle[
 .center[
@@ -292,22 +362,26 @@ name: logistics
 ]
 ]
 
-- The moral suasion group’s usage is not statistically different from that of the control group. 
-- By contrast, the economic incentive group’s consumption is statistically different from that of the control group as well as the moral suasion group. 
-- This finding has an important policy implication because the existence of habit formation could offer additional policy impacts for post-intervention periods.
+- No habit formation by the moral suasion group  
+- Habit formation by the economic incentive group
 
 ---
 ## Mechanisms behind the Treatment Effects
 
-- Moral suasion was effective only for the first few treatment days and habituated quickly over repeated interventions. By contrast, economic incentives produced strong persistent effects on energy conservation.
+- Moral suasion was effective only for the first few treatment days and habituated quickly over repeated interventions. 
+
+
+- By contrast, economic incentives produced strong persistent effects on energy conservation.
+
+
 - Two potential mechanisms
-    1. the treatments might have induced investment in physical capital stock—households might have purchased energy-efficient appliances in response to the treatments
+    1. the treatments might have induced investment in physical capital stock (new and efficient appliances)
     2. the treatments might have induced new utilization habits for daily electricity use.
 
 ---
-## Result - The first potential mechanism
+## Result - Energy Investment
 
-- After the experimental period, they asked customers if they purchased energy-efficient appliances since the start of the experiment.
+- Whether households purchased energy-efficient appliances since the beggining of the experiment.
 
 .middle[
 .center[
@@ -315,21 +389,20 @@ name: logistics
 ]
 ]
 
-- The estimates suggest that customers in the two treatment groups had similar statistically significant increases in purchasing energy-efficient air conditioners compared to the control group.
----
-## Result - The second potential mechanism
+- Similar increases in purchasing energy-efficient air conditioners across two treatment groups.
 
-- After the experimental period, they asked customers two questions related to this point. 
-    1. The first question inquired about their efforts toward adopting an energy-efficient lifestyle (Column 1).
-    2. The second question whether they were using each electric appliance in an energy-efficient way (Other columns).
+---
+## Result - New Habit
+
+- Two questions after the epxeriment 
+    1. Their efforts toward adopting an energy-efficient lifestyle (Column 1).
+    2. Whether they were using each electric appliance in an energy-efficient way (Other columns).
 
 .middle[
 .center[
 &lt;img src="figs/table7.png" width="600"&gt;
 ]
 ]
-
-- The survey implies that experiencing high electricity prices is likely to trigger a change in utilization habit for electricity use, encouraging customers to use electricity more efficiently.
 
 
     </textarea>
