@@ -13,6 +13,7 @@ output:
       countIncrementalSlides: no
       ratio: '16:9'
 knit: pagedown::chrome_print
+
 ---
 class: title-slide-section, center, middle
 name: logistics
@@ -23,13 +24,13 @@ name: logistics
 
 ---
 
-## Observational Study (観察研究) is the norm, rather than the exception
+## Observational Study (観察研究) 
 
-- Researchers in social science cannot always conduct RCT.
+- Researchers in social science cannot always conduct a randomized control trial.
 
 - Instead, we need to use **observational data** in which treatment assignment may not be random.
 
-- An approach towards causal inference in this situation is **controlling observable characteristics** that causes a selection bias.
+- An approach in this case is **controlling observable characteristics** that causes a selection bias.
 
 - This approach is essentially estimation of **linear regression model (線形回帰モデル)** by **ordinally least squares (OLS, 最小二乗法)**.
 
@@ -97,7 +98,7 @@ name: logistics
 
 ## Identification of Treatment Effect Parameters
 
--   The assumption implies that 
+-   Assumption 1 (unconfoundedness) implies that 
 $$\begin{aligned}
     E[Y_{1i}|D_{i} & =1,X_{i}]=E[Y_{1i}|D_{i}=0,X_{i}]=E[Y_{1i}|X_{i}]\\
     E[Y_{0i}|D_{i} & =1,X_{i}]=E[Y_{0i}|D_{i}=0,X_{i}]=E[Y_{0i}|X_{i}]\end{aligned}$$
@@ -107,15 +108,23 @@ $$\begin{aligned}
 
 ---
 
-
 -   The $ATT$ conditional on $X_{i}=x$ is given by 
 $$\begin{aligned}
     E[Y_{1i}-Y_{0i}|D_{i}=1,X_{i}] & =E[Y_{1i}|D_{i}=1,X_{i}]-E[Y_{0i}|D_{i}=1,X_{i}]\\
-     & =E[Y_{1i}|D_{i}=1,X_{i}]-E[Y_{0i}|D_{i}=0,X_{i}]\\
+     & =E[Y_{1i}|D_{i}=1,X_{i}]-E[Y_{0i}|D_{i}=0,X_{i}] 
+\end{aligned}$$
+
+- Assumption 2 (overlapping) is needed to use the following
+$$\begin{equation}
+E[Y_{di}|D_{i}=d,X_{i}] = E[Y_i | D_i = d, X_i] \ \mathrm{for} \ d=0,1
+\end{equation}$$
+- Why? Overlapping assumption $P(D_{i}=1|X_{i}=x) \in(0,1)$ means that for each $x$, **we should have people in both treatment and control group**. 
+- If not, we cannot observe both $E[Y_i | D_i = d, X_i]$ for $d=0,1$.
+
+- With two assumptions,
+$$\begin{aligned}
+    E[Y_{1i}-Y_{0i}|D_{i}=1,X_{i}] 
      & =\underbrace{E[Y_{i}|D_{i}=1,X_{i}]}_{avg\ with\ X_{i}\ in\ treatment}-\underbrace{E[Y_{i}|D_{i}=0,X_{i}]}_{avg\ with\ X_{i}\ in\ control}\end{aligned}$$
-
-
--   Intuition: Comparing the outcome across control and treatment groups after conditioning on $X_{i}$
 
 
 ---
@@ -323,12 +332,12 @@ $$Y_i = \beta_0 + \beta_1 X_i + \beta_2 X_i^2 + \beta_3 X_i^3 + \epsilon_i$$
 - A **dummy variable** takes only 1 or 0. This is used to express qualititative information
 - Example: Dummy variable for race 
 
-\begin{eqnarray}
+$$\begin{eqnarray}
 white_{i}=\left\{ \begin{array}{ll}
 1 & if\ white\\
 0 & otherwise
 \end{array} \right.
-\end{eqnarray}
+\end{eqnarray}$$
 
 - The coefficient on a dummy variable captures the difference of the outcome $Y$ between categories
 $$Y_i = \beta_0 + \beta_1 white_i + \epsilon_i$$
@@ -393,12 +402,10 @@ name:
 $$\sqrt{N}(\hat{\beta}-\beta)\overset{d}{\rightarrow}N\left(0,V \right)$$
 - $V$ is called **asymptotic variance (matrix)** given by 
 
-$$
-\begin{equation}
+$$\begin{equation}
 \underbrace{V}_{(K+1)\times(K+1)}
      = E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}E[\mathbf{x}_{i}'\mathbf{x}_{i}\epsilon_{i}^{2}]E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}
-\end{equation}
-$$
+\end{equation}$$
 
 - $\mathbf{x}_{i}=\left( 1, X_{i1},\cdots,X_{iK} \right)'$ is $(K+1)\times 1$ vector.
 
@@ -471,24 +478,20 @@ $$H_{0}:\beta_{1} + \beta_2 = 0,\ H_{1}:\beta_{1} + \beta_2 \neq 0$$
 
 - 95% confidence interval
 
-\begin{eqnarray}
+$$\begin{eqnarray}
 CI_{n}	&=& \left\{ k:|\frac{\hat{\beta}_{1}-k}{SE(\hat{\beta}_{1})}|\leq1.96\right\} \\
     	&=& \left[\hat{\beta}_{1}-1.96\times SE(\hat{\beta}_{1}),\hat{\beta_{1}}+1.96\times SE(\hat{\beta}_{1})\right]
-\end{eqnarray}
-
-
+\end{eqnarray}$$
 - Interpretation: If you draw many samples (dataset) and construct the 95% CI for each sample, 95% of those CIs will include the true parameter.
 
 ---
 ## Homoskedasticity vs Heteroskedasticity
 
 - The error term $\epsilon_{i}$ has **heteroskedasticity (不均一分散)** if $Var(u_{i}|X_{i})$ depends on $X_{i}$. The asymptotic variance is
-$$
-\begin{eqnarray}
+$$\begin{eqnarray}
     V
      = E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}E[\mathbf{x}_{i}'\mathbf{x}_{i}\epsilon_{i}^{2}]E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}
-\end{eqnarray}
-$$
+\end{eqnarray}$$
 - If not, we call $\epsilon_{i}$ has **homoskedasticity (均一分散)**. In this case, 
 $$V = E[\mathbf{x}_{i}'\mathbf{x}_{i}]^{-1}\sigma^{2}$$
 where $\sigma^2 = V(\epsilon_i)$.
@@ -530,7 +533,7 @@ name: logistics
     $\mu_{k}(x)=E[Y_{i}|D_{i}=k,X_{i}=x]$ for $k\in\{0,1\}$
 -   The analog estimators are 
 $$\begin{aligned}
-    \hat{ATE} & =\frac{1}{N}\sum_{i=1}^{N}\hat{\mu}_{1}(X_{i})-\hat{\mu}_{0}(X_{i})\\
+    \hat{ATE} & =\frac{1}{N}\sum_{i=1}^{N} \left( \hat{\mu}_{1}(X_{i})-\hat{\mu}_{0}(X_{i}) \right) \\
     \hat{ATT} & =\frac{N^{-1}\sum_{i=1}^{N}D_{i}(Y_{i}-\hat{\mu}_{0}(X_{i}))}{N^{-1}\sum_{i=1}^{N}D_{i}}\end{aligned}$$
 -   How to estimate $\mu_{k}(x)=E[Y_{i}|D_{i}=k,X_{i}=x]$ ?
 
@@ -580,14 +583,12 @@ $$\begin{aligned}
 -   Define $\hat{y}_{i}(0)$ and $\hat{y}_{i}(1)$ be the estimator for
     (hypothetical) outcomes when treated and not treated.
     
-$$
-\begin{equation}
+$$\begin{equation}
 \hat{y}_{i}(0)=\begin{cases}
 y_{i} & if\ D_{i}=0\\
 \frac{1}{M}\sum_{j\in L_{M}(i)}y_{j} & if\ D_{i}=1
 \end{cases}
-\end{equation}
-$$
+\end{equation}$$
 
 -   $L_{M}(i)$ is the set of $M$ individuals in the opposite group who
     are "close" to individual $i$
