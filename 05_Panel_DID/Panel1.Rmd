@@ -10,6 +10,7 @@ output:
       highlightLines: yes
       highlightStyle: github
       ratio: '16:9'
+knit: pagedown::chrome_print
 
 ---
 
