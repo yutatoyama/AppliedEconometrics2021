@@ -179,6 +179,8 @@ where $\bar{y}(t,G)$ is the sample average for group $G$ in period
 - On April 1, 1992, New Jersey's minimum wage rose from 4.25 to 5.05 USD.
 - Compare fast-food restaurants in New Jersey (treament group) and eastern Pennsylvania (control group) before and after the rise.
 
+---
+
 .middle[
 .center[
 <img src="figs/CardKruger1994Table3.png" width="600">
