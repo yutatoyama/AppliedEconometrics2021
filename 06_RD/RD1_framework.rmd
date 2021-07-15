@@ -12,7 +12,6 @@ output:
       highlightLines: yes
       highlightStyle: github
       ratio: '16:9'
-
 knit: pagedown::chrome_print
 ---
 
@@ -245,7 +244,7 @@ name: logistics
 
 .middle[
 .center[
-<img src="figure_table/fig_STUVA_violate.png" height="550">
+<img src="figure_table/fig_STUVA_violate.png" height="500">
 ]
 ]
 
@@ -320,7 +319,7 @@ name: logistics
 
 .middle[
 .center[
-<img src="figure_table/ItoSallee.png" height="530">
+<img src="figure_table/ItoSallee.png" height="500">
 ]
 ]
 
